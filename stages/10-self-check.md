@@ -6,8 +6,8 @@ Run the §14 self-check (process audit + content completeness). A blocking ✗ i
 - `python -m specalign registry check <repo>` — INDEX, spec §0, tags.
 - `python -m specalign drift <repo> <F-id>` — against the *previous* tag it lists exactly this run's commits and
   uncommitted-to-tag changes; every listed source must be reflected in the draft (after finalization it must be clean).
-- A spec linter (blocks, IDs, DF → AC → evidence links, label vocabulary) is planned but **not shipped**: walk the
-  chain in `gates/evidence.md` by hand and list each break as ✗.
+- `python -m specalign lint <repo> <F-id>` — blocks, IDs, DF → AC → evidence links, label vocabulary, leftover
+  markers, §14 verdict, §13C. Every error is a ✗ to fix before presenting; warnings are listed in §14 with a reason.
 
 ## Judgement checks
 - **Rebuildable from the spec alone?** At Core tier answer five questions derived from the ACs using *only* the spec;

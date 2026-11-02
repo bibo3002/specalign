@@ -36,5 +36,6 @@ DF-n ──resolves──▶ AC-m ──cites──▶ V-k (evidence entry in §
 
 - Every `Resolved` DF has ≥1 AC; every AC has a flow and ≥1 V-entry; every V-entry has a label and a date.
 - §13D (approval history) rows reference the D-entries in §13B that record the decisions.
-- `specalign lint` (planned, P1) enforces these links; until it ships, the self-check (stage 10) walks them by hand
-  and lists any break as ✗.
+- `python -m specalign lint` enforces these links. A spec made with template v1.0 (its §0 Card has `Skill version`)
+  is checked strictly; a legacy spec gets warnings for broken traceability and is normalised at its next SYNC.
+  Released-spec rules (Open DF, tag/version, `Overall: PASS`, §13C holds the card version) are errors in both formats.

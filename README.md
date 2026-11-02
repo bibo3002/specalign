@@ -50,11 +50,27 @@ An update refuses to overwrite a file that was edited by hand since the last ins
 ## Tools
 
 ```
-python -m specalign registry check <repo>    # run from <skill>/tools; INDEX ↔ spec ↔ §0 Card ↔ exact tag
-python -m specalign drift <repo> [F-ids]     # sources changed since each release tag
+python -m specalign preflight <repo> [--path P]        # run from <skill>/tools; binding, clean tree, tags, encodings
+python -m specalign registry check <repo>              # INDEX ↔ spec ↔ §0 Card ↔ exact tag
+python -m specalign drift <repo> [F-ids]               # sources changed since each release tag
+python -m specalign lint <repo> [F-ids | --file SPEC]  # blocks, IDs, DF → AC → evidence chain, labels
+python -m specalign docedit append-row|patch-row|set-card|replace-block FILE …   # table-aware edits
+python -m specalign manifest init|stage|approve|add|show|verify <repo> …         # run record + resume
+python -m specalign finalize plan|apply|staged|tag|push <repo> PLAN.json         # gated finalization
 ```
-Exit codes: `registry check` 0 ok · 1 findings · 2 error. `drift` 0 clean · 1 drift · 2 error · 3 unverifiable with
-`--strict`. `--json` output is a stable contract for CI (`templates/adopter-ci.yml`).
+Exit codes: `preflight`, `registry check`, `lint`, `manifest verify`, `finalize` 0 ok · 1 findings · 2 error. `drift`
+0 clean · 1 drift · 2 error · 3 unverifiable with `--strict`. `--json` output is a stable contract for CI
+(`templates/adopter-ci.yml`).
+
+**Auditability.** A run keeps a record (`<SPEC_DIR>/runs/<date>-<F>-<mode>.json`): every approval with the filled
+statement, the user's reply verbatim and a UTC time; dispositions; files written with their sha256; migrations with
+pre-check, rollback and verification; tests; cleanup counts; tags. `finalize apply|tag|push` and an applied migration
+are refused unless the matching approval is recorded and names the files, tags or remote. The record proves that a
+claim was made and was not altered afterwards; it cannot prove who typed the reply.
+
+**Lint severity.** Specs made with template v1.0 (their §0 Card has `Skill version`) are linted strictly. Legacy
+specs get the same checks but traceability breaks are warnings, so an existing corpus can adopt the linter without a
+flood; rules protecting a released spec (Open DF, tag/version, `Overall: PASS`, version history) are errors in both.
 
 ## Configuration (per adopting repository)
 
@@ -72,7 +88,8 @@ All project values live in `<SPEC_DIR>/binding.md` (template: `templates/binding
 
 Every stage transition is gated; evidence rules are tier-invariant. The mechanical checks (registry, drift) are
 tool-run and pasted, never retyped. What is **not** yet validated: the behavioural gates have no executable evals
-(playbook §5 rows 21–29 are "not exercised"), and `lint`/`finalize`/`manifest` are planned.
+(playbook §5 rows 21–29 are "not exercised"); `inventory` and the schema fingerprint are planned; the tools have run
+only against fixture repositories and one real corpus (Sanad), not yet against a second project.
 
 ## Troubleshooting (day-one failures only)
 

@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DOC_DIRS = ["stages", "modes", "gates"]
 REF_RE = re.compile(r"`((?:stages|modes|gates|templates|references|adapters|scripts|tools)/[A-Za-z0-9_./*<>{}-]+?)`")
-PLANNED = ("lint", "docedit", "finalize", "manifest", "inventory")
+PLANNED = ("inventory",)
 
 
 def docs():
@@ -62,6 +62,13 @@ class SkillDocTests(unittest.TestCase):
         for f in docs():
             for m in re.finditer(r"python -m specalign (\w+)", f.read_text(encoding="utf-8")):
                 self.assertIn(m.group(1), known, f"{f.relative_to(ROOT)}: unknown command {m.group(1)!r}")
+
+    def test_router_tools_table_lists_every_cli_command(self):
+        from specalign.cli import build_parser
+        known = set(build_parser()._subparsers._group_actions[0].choices)
+        router = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        for cmd in sorted(known):
+            self.assertRegex(router, rf"\|\s*`{cmd}\b", f"SKILL.md tools table lacks a row for `{cmd}`")
 
     def test_legacy_stage_numbers_do_not_leak_into_new_documents(self):
         """The old numbering (12.5, 4.5, 13.5) survives only in the router's legacy column."""

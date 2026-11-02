@@ -24,6 +24,16 @@ jobs:
       - name: Registry check (blocking)
         run: PYTHONPATH="$SKILL_TOOLS" python -m specalign registry check . --json | tee registry.json; test "${PIPESTATUS[0]}" -eq 0
         shell: bash
+      - name: Spec lint (errors block; warnings are the legacy-normalisation backlog)
+        run: PYTHONPATH="$SKILL_TOOLS" python -m specalign lint . --no-warnings
+        shell: bash
+      - name: Run records are intact (hashes, approvals, DDL, tags)
+        run: |
+          shopt -s nullglob
+          for run in docs/specs/runs/*.json; do
+            PYTHONPATH="$SKILL_TOOLS" python -m specalign manifest verify . --run "$run" || exit 1
+          done
+        shell: bash
       - name: Drift report (informational — ripple drift is expected)
         run: PYTHONPATH="$SKILL_TOOLS" python -m specalign drift . --exit-zero
         shell: bash

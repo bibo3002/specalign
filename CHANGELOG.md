@@ -43,9 +43,27 @@ adoptions, linter clean on the reference corpus).
   range, dead-source report, `--exit-zero`/`--strict`.
 - `install.py`: installs/syncs the global and project copies, LF-normalised, with `INSTALL-MANIFEST.json`; `--check`
   detects hand edits, missing and out-of-date files; refuses to overwrite hand edits without `--force`.
-- Tests: 69 stdlib `unittest` cases incl. fixture repos (Arabic, CRLF), installer round trip, and a conformance test
-  that keeps the skill's own documents consistent (size budget, no dangling references, no unshipped commands).
-- CI for the skill repo (`.github/workflows/ci.yml`) and a copy-in workflow for adopters (`templates/adopter-ci.yml`).
+- `preflight`: binding keys complete (placeholders rejected), tracked tree clean under the spec dir and any `--path`,
+  tag namespace, UTF-8 and mixed line endings, active run noted.
+- `lint`: 18 blocks, §0 Card, unique IDs, DF terminal states, DF → AC → evidence chain, controlled labels, §13D → §13B
+  decisions, leftover markers, §14 verdict, §13C vs card version. Strict for template-v1.0 specs; legacy specs get
+  warnings for traceability so an existing corpus can adopt it. On the Sanad corpus (14 specs): 6 errors (F4: five
+  Open DFs on an Approved spec and no §13D) and 84 warnings (legacy traceability backlog).
+- `docedit`: table-aware `append-row` / `patch-row` / `set-card` / `replace-block`; idempotent, preserves UTF-8, BOM,
+  CRLF/LF and column alignment, atomic writes, `--dry-run` diff. Replaces the ad-hoc edit scripts of every run.
+- `manifest`: run record (`specalign.run/1`) and resumable `.specalign/run-state.json`. Approvals are stored with the
+  filled statement, the user's reply verbatim and a UTC time; stage changes check the recorded gates (T1, R1, D1, W1);
+  an applied migration needs a D1 naming it plus pre-check, rollback and verification; `verify` re-checks file hashes,
+  approvals, DDL and tags.
+- `finalize`: `plan` (dry-run diff, lint of the would-be result, `expect_files` check), `apply` (needs W1/C1 naming
+  every file; records hashes; registry check with tag checks deferred), `staged` (staged files = plan), `tag` (needs
+  G1/C1 naming each tag; refuses a dirty tree, an existing tag, or a spec at another version), `push` (needs P1/C1
+  naming remote and tags; prints the command, `--execute` runs it).
+- Tests: 139 stdlib `unittest` cases incl. fixture repos (Arabic, CRLF), installer round trip, the gates' refusals, and
+  a conformance test that keeps the skill's own documents consistent (size budget, no dangling references, every
+  documented command exists, the router lists every CLI command).
+- CI for the skill repo (`.github/workflows/ci.yml`) and a copy-in workflow for adopters (`templates/adopter-ci.yml`,
+  now also running `lint` and `manifest verify`).
 
 ### Changed — templates
 - Specification template v1.0: skill version, evidence legend, ID conventions, dispositions, superseded-wording and
@@ -53,8 +71,8 @@ adoptions, linter clean on the reference corpus).
   refreshed. Playbook validation matrix extended with traps 18–29 (not yet exercised: "not exercised", never assumed).
 
 ### Not yet shipped (planned)
-`lint`, `docedit`, `finalize`, `manifest` (run record / resumable state), `inventory`, DB/UI/test adapters beyond
-documentation, executable evals. The documents say so wherever a step is still manual.
+`inventory` and the schema fingerprint, dependency-aware drift (§12), DB/UI/test adapters beyond documentation,
+executable evals, a generic verification playbook. The documents say so wherever a step is still manual.
 
 ## [0.11.0] — 2026-08-27
 ### Added — Rescan Hardening (E1–E10)

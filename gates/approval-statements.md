@@ -39,4 +39,4 @@ For a rescan that edits `INDEX.md`, use W1 with the file list `docs/specs/INDEX.
 - **Never** tag, push, delete data, apply DDL or force-push without the matching form.
 - Quote the user's words exactly; do not paraphrase them into a stronger approval.
 - Forms are fixed text. A project may add forms in its binding but may not weaken these.
-- `specalign finalize tag|push` (when available) refuses to run without a recorded G1/P1/C1 in the manifest.
+- `specalign finalize apply|tag|push` refuses to run without a recorded G1/P1/C1 in the manifest.

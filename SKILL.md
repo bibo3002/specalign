@@ -91,12 +91,17 @@ normalised at their next SYNC (`modes/sync.md`).
 
 | Command | Purpose |
 |---|---|
+| `preflight <repo>` | stage 0: binding complete, tracked files clean, tag namespace, encodings; exit 0/1/2 |
 | `registry check <repo>` | INDEX ↔ spec ↔ §0 Card ↔ exact tag; exit 0/1/2 |
 | `drift <repo> [F-ids]` | sources changed since each release tag; exit 0/1/2/3 |
+| `lint <repo> [F-ids]` | blocks, IDs, DF → AC → evidence chain, labels, markers; exit 0/1/2 |
+| `docedit …` | table-aware, EOL/BOM-preserving edits of specs and the registry (no hand-written scripts) |
+| `manifest init/stage/approve/add/show/verify` | run record + resumable state; approvals stored verbatim, UTC time |
+| `finalize plan/apply/staged/tag/push <plan.json>` | dry-run-first finalization; apply, tag, push refuse without the recorded approval |
 | `python install.py --check` | skill copies match the source; no hand edits |
 
-Planned (not yet shipped — do not call): `lint`, `docedit`, `finalize`, `manifest`. Until then those steps are manual,
-as described in the stage files.
+Not yet shipped (do not call): `inventory`; its step is manual, as the stage file says. Tool output is pasted into
+§14, never retyped.
 
 ## Rationalization table
 
