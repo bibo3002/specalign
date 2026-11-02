@@ -1,0 +1,29 @@
+# Copy to .github/workflows/specalign.yml in the adopting project.
+# Needs the skill installed in the repo: `python <specalign>/install.py --project .`
+# (adjust SKILL_TOOLS if you keep the skill elsewhere).
+name: specalign
+on:
+  push:
+    paths: ["docs/specs/**", ".opencode/skills/specalign/**"]
+  pull_request:
+    paths: ["docs/specs/**", ".opencode/skills/specalign/**"]
+
+env:
+  SKILL_TOOLS: .opencode/skills/specalign/tools
+
+jobs:
+  registry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # tags and history are part of the evidence
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Registry check (blocking)
+        run: PYTHONPATH="$SKILL_TOOLS" python -m specalign registry check . --json | tee registry.json; test "${PIPESTATUS[0]}" -eq 0
+        shell: bash
+      - name: Drift report (informational — ripple drift is expected)
+        run: PYTHONPATH="$SKILL_TOOLS" python -m specalign drift . --exit-zero
+        shell: bash

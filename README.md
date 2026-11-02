@@ -1,69 +1,85 @@
 # SpecAlign
 
-Executable-specification skill for AI agents: it extracts and maintains agent-readable specs for
-**existing** features, validating every claim against a triple source of truth — **code, live
-database, runtime behavior**. GENESIS reverse-engineers undocumented features; SYNC realigns
-existing docs with reality. Supersedes `brownfield-spec` (retired 2026-08-25).
+Executable-specification skill for AI agents: it extracts and maintains agent-readable specs for **existing**
+features, validating every claim against a triple source of truth — **code, live database, runtime behaviour**.
+GENESIS reverse-engineers undocumented features; SYNC realigns existing docs with reality. Supersedes
+`brownfield-spec` (retired 2026-08-25).
+
+> **Status: 1.0.0-dev** (branch `v1-production`). See `CHANGELOG.md` for what changed from 0.11.0 and what is still
+> planned. The version flips to 1.0.0 only when the release criteria are met (evals green, three dry-run adoptions).
 
 ## Invocation
 
-SpecAlign runs inside an agent conversation — there is no CLI. Address the agent with:
+SpecAlign runs inside an agent conversation. Address the agent with:
 
 | Command | Effect |
 |---|---|
 | `SpecAlign GENESIS <F-id>` | Reverse-engineer feature `<F-id>` into a new spec |
 | `SpecAlign SYNC <F-id>` | Realign an existing spec with current reality |
-| `SpecAlign list` | Read the registry (`docs/specs/INDEX.md`), propose the next pilot |
+| `SpecAlign list` | Read the registry, propose the next pilot |
 | `SpecAlign selfcheck <F-id>` | Run the spec's §14 self-check; report only, change nothing |
-| `SpecAlign drift [F-ids]` | Run drift probe on all (or named) features; propose REGISTRY Stale flips on confirmation |
-| `SpecAlign init` | Bootstrap `binding.md` + `INDEX.md` from zero via config scan (manual gate) |
-| `SpecAlign rescan` | Update `binding.md` diffs + propose new `INDEX` rows (protected fields untouched) |
-| `abort` | Stop mid-run; summarize; write nothing |
+| `SpecAlign drift [F-ids]` | Run the drift tool; propose registry `Stale` flips on confirmation |
+| `SpecAlign init` / `rescan` | Bootstrap or maintain `binding.md` + `INDEX.md` |
+| `abort` | Stop mid-run; summarise; write nothing further |
 
-The agent proposes a **tier** (Micro / Standard / Core) at scope time; you decide. Gates close on
-the exact approval statements printed by the agent — a bare "yes" to a shown statement counts.
+The agent proposes a **tier** (Micro / Standard / Core); you decide. Gates close on the filled approval statements
+the agent shows — a bare "yes" to a shown statement counts, and your reply is recorded verbatim.
 
-## Package Shape
+## Package shape
 
-- `SKILL.md` — authoritative 14-stage workflow (binding gate → inventory → evidence → draft →
-  verification → finalization), dynamic tiers, cross-section pass, approval statements.
-- `references/verification-playbook.md` — DB introspection queries, UI behavioral protocol,
-  cleanup pathways, the 17-trap validation matrix, commit hygiene.
-- `templates/specification-template.md` — the 18-block executable spec format (§13A–§13D logs).
-- `templates/handoff-readme-template.md` — seed for a project's `docs/specs/README.md`.
-- `CHANGELOG.md` — version history; single home.
+| Path | Purpose |
+|---|---|
+| `SKILL.md` | the router: invariants, tiers, the 14-stage pipeline table (read this first) |
+| `stages/` `modes/` `gates/` | per-stage, per-mode and per-gate instructions, loaded on demand |
+| `templates/` | 18-block spec template, binding template, rescan report, handoff README, adopter CI |
+| `references/` | verification playbook (DB/UI protocols, cleanup, validation matrix), example binding |
+| `adapters/` | what a DB / UI / test adapter must provide |
+| `tools/specalign/` | stdlib-only Python CLI: `registry check`, `drift` (+ installer module) |
+| `scripts/` | thin wrappers keeping the old `rescan_check.py` / `drift_probe.py` entry points |
+| `install.py` | installs and verifies the skill in `~/.claude/skills` and `<project>/.opencode/skills` |
+| `tests/` | `unittest` suite (fixtures are throwaway git repos); `python -m unittest discover -s tests` |
+
+## Install and update
+
+```
+python install.py --project /path/to/project        # global + project copy, LF, with INSTALL-MANIFEST.json
+python install.py --project /path/to/project --check   # exit 1 on hand edits, missing or out-of-date files
+```
+An update refuses to overwrite a file that was edited by hand since the last install (`--force` to override).
+
+## Tools
+
+```
+python -m specalign registry check <repo>    # run from <skill>/tools; INDEX ↔ spec ↔ §0 Card ↔ exact tag
+python -m specalign drift <repo> [F-ids]     # sources changed since each release tag
+```
+Exit codes: `registry check` 0 ok · 1 findings · 2 error. `drift` 0 clean · 1 drift · 2 error · 3 unverifiable with
+`--strict`. `--json` output is a stable contract for CI (`templates/adopter-ci.yml`).
 
 ## Configuration (per adopting repository)
 
-SpecAlign is project-agnostic; all project values live in `<SPEC_DIR>/binding.md`. Required keys:
-`PROJECT_MAP`, `SPEC_DIR`, `REGISTRY`, `DB_TOOL`, `UI_TOOL`, `TAG_PREFIX`, `TEST_DATA_PREFIX`,
-`BASELINE_DATE` (ISO 8601), `CONVENTIONS`, `PROJECT_PITFALLS`; optional: `TEST_ACCOUNTS`,
-`GOVERNING_SKILL`, `UI_REVIEW_SKILL`, `DOCS_REVIEW_SKILL`. Missing/incomplete binding stops the
-run — never guessed. Example: `references/binding-example-sanad.md`.
+All project values live in `<SPEC_DIR>/binding.md` (template: `templates/binding.template.md`; example:
+`references/binding-example-sanad.md`). A missing or incomplete binding stops the run — values are never guessed.
 
-## Adopting SpecAlign in Another Repository
+## Adopting SpecAlign in another repository
 
-1. Copy this folder into your skills directory.
-2. Create `docs/specs/binding.md` from the example, filling your tools and conventions.
-3. Seed `docs/specs/INDEX.md` (one row per feature, status `Undocumented`).
-4. Invoke `SpecAlign list` and pick a pilot (full CRUD + few lookups, ≤10 min verifiable).
+1. `python install.py --project <repo>`.
+2. Create `docs/specs/binding.md` from the template and `docs/specs/INDEX.md` (one `Undocumented` row per feature).
+3. Copy `templates/adopter-ci.yml` to `.github/workflows/specalign.yml`.
+4. Invoke `SpecAlign list`, pick a small pilot (full CRUD + few lookups, ≤10 min to verify).
 
 ## Quality
 
-Every stage transition is gated (inventory confirmation, anti-pattern checkpoint, Socratic
-questions, write permission). Evidence rules are tier-invariant: Micro compresses documentation
-breadth, never citations or verification. Validation status: field-tested draft (v0.9.0) — RED
-failures documented from two pilots; GREEN pressure scenarios pending first SpecAlign pilot
-(see `SKILL.md` → Validation Status; flips to v1.0.0 after one clean run). Version history:
-`CHANGELOG.md`.
+Every stage transition is gated; evidence rules are tier-invariant. The mechanical checks (registry, drift) are
+tool-run and pasted, never retyped. What is **not** yet validated: the behavioural gates have no executable evals
+(playbook §5 rows 21–29 are "not exercised"), and `lint`/`finalize`/`manifest` are planned.
 
 ## Troubleshooting (day-one failures only)
 
-- **Run refuses to start: "dirty tracked files"** — commit or stash changes under `docs/specs/`
-  or the feature's code paths first; unrelated untracked files are fine.
-- **Browser wedged after a print dialog** — navigate to about:blank, re-login, re-navigate;
-  affected steps become `code-verified-only`.
-- **Read-only database tool blocks cleanup** — remove test rows via the app UI (soft-delete),
-  or execute the generated SQL yourself; the agent verifies afterward.
-- **Commit staged nothing** — check path case (`Skills/` vs `skills/`); verify staged count
-  before committing (playbook §6).
+- **"dirty tracked files"** — commit or stash changes under `SPEC_DIR` or the feature's code paths; unrelated untracked
+  files are fine.
+- **Browser wedged after a print dialog** — about:blank, re-login, re-navigate; affected steps become
+  `code-verified-only`. Declare it in the binding's capability profile so it is never triggered.
+- **Cleanup blocked by a read-only database tool** — scoped SQL with an X1 confirmation (`gates/ddl-protocol.md`).
+- **Commit staged nothing** — check path case (`Skills/` vs `skills/`); verify the staged count (playbook §6).
+- **`registry check` fails right after finalizing** — the tag is created after the commit; re-run it after the tag exists.

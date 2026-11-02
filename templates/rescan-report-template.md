@@ -1,4 +1,4 @@
-# Rescan Report Template — SpecAlign v0.11.0
+# Rescan Report Template — SpecAlign v1.0
 
 Use this template for every `SpecAlign rescan` run. Sections A–I are **mandatory**; one report
 per rescan, filed in `studies/rescan-<ISO_DATE>-<slug>.md`. Prose language per binding
@@ -11,7 +11,7 @@ CONVENTIONS; user-facing strings verbatim in their runtime language; all metadat
 > - §C detects orphans (spec files without INDEX rows). One row per anomaly.
 > - §D proposes new INDEX rows only (never modifies Approved rows).
 > - §E uses the structured schema — no prose drift flags.
-> - §F output comes from `scripts/drift_probe.py --json`, not manual `git log` walks.
+> - §F output comes from `python -m specalign drift <repo> --json`, not manual `git log` walks.
 > - §G refreshes the "Next recommended pilot" note when the current candidate is now Approved.
 > - §H records the 5 min/survey / 20 min total budget with timestamps.
 
@@ -29,8 +29,9 @@ CONVENTIONS; user-facing strings verbatim in their runtime language; all metadat
 **Preflight commands run:**
 1. `git status --short` → expected empty.
 2. `test -f docs/specs/binding.md && echo OK` → expected `OK`.
-3. `python3 .opencode/skills/specalign/scripts/drift_probe.py <repo> --spec-dir <SPEC_DIR> --json > /tmp/drift.json && echo OK`
-   → expected `OK`. Output saved at `/tmp/drift.json`, summarized in §F.
+3. `python -m specalign registry check <repo> --spec-dir <SPEC_DIR>` → expected exit 0 (a failing baseline is reported here).
+4. `python -m specalign drift <repo> --spec-dir <SPEC_DIR> --json --exit-zero > drift.json`
+   → expected exit 0. Output saved at `drift.json`, summarized in §F.
 
 ---
 
@@ -38,15 +39,16 @@ CONVENTIONS; user-facing strings verbatim in their runtime language; all metadat
 
 | Axis | Count | Source path(s) |
 |---|---|---|
-| Routes | n | `src/router/index.ts` |
-| Pages (non-stub) | n | `src/pages/**/*.vue` excluding `UnderConstruction.vue` |
-| Stubs (UnderConstruction) | n | matches for `UnderConstruction.vue` imports |
-| API endpoint groups | n | `server/index.ts` `app.<verb>(...)` calls |
-| Composables | n | `src/composables/*.ts` |
-| Pinia stores | n | `src/stores/*.ts` |
-| Component dirs | n | `src/components/<dir>/` |
-| Spec files on disk | n | `docs/specs/SPEC-F*.md` |
-| INDEX rows total | n | `docs/specs/INDEX.md` table |
+| Routes | n | {router file(s)} |
+| Pages (non-stub) | n | {page directory}, excluding placeholders |
+| Stubs / placeholders | n | {how stubs are recognised in this project} |
+| API endpoint groups | n | {server registration pattern} |
+| State modules / composables | n | {paths} |
+| Component dirs | n | {paths} |
+| Spec files on disk | n | `<SPEC_DIR>/SPEC-F*.md` |
+| INDEX rows total | n | `<SPEC_DIR>/INDEX.md` table |
+
+(Replace the `{…}` placeholders with the project's real paths from the binding; counts are cited, never invented.)
 
 ---
 
@@ -89,26 +91,26 @@ verifiable SQL/browser step; **Action** says what to do (SYNC, document at next 
 
 **Enum (exhaustive — extend, don't rename):**
 `version-mismatch` · `behavior-expanded` · `tag-missing` · `stub-501` · `enum-mismatch` ·
-`lookup-richer` · `accessibility-regression` · `permission-gap` · `schema-drift`
+`lookup-richer` · `accessibility-regression` · `permission-gap` · `schema-drift` · `ripple-drift` · `dead-source`
 
 ---
 
-## §F. Spec-Level Drift (drift_probe.py)
+## §F. Spec-Level Drift (`specalign drift`)
 
 | Source | Output |
 |---|---|
-| Command | `python3 scripts/drift_probe.py <repo> --json` |
+| Command | `python -m specalign drift <repo> --json --exit-zero` |
 | Features scanned | n |
 | `clean` | n |
 | `drifted` | n (list F-ids) |
 | `unverifiable` | n (list F-ids with reason) |
 
-Detail for `drifted` and `unverifiable` rows lives in `/tmp/drift.json` (or attach inline if
-short). At least one drifted row → consider scheduling a SYNC for that feature.
+Detail for `drifted` and `unverifiable` rows lives in `drift.json` (or attach inline if short). Triage drifted rows as
+`ripple` vs real (`modes/sync.md` §1); a real one → schedule a SYNC for that feature. Dead sources → fix the `Sources` line.
 
-If `drift_probe.py` is unavailable (legacy repo), fall back to:
+If the CLI is unavailable, fall back to:
 ```bash
-git log --since=<watermark> --name-only --pretty=format: -- <Approved sources>
+git log <tag>..HEAD --name-only --pretty=format: -- <Approved sources>
 ```
 and record the result here with the label `fallback-manual`.
 
@@ -144,9 +146,9 @@ wins, applying the pilot-selection heuristics from SKILL.md (Prefer: full CRUD +
 
 ## §I. Approval
 
-Per Stage 12.5 gate (see SKILL.md `Rescan Write Permission Gate`):
+Per the write gate (stage 11; forms W1 / N1 in `gates/approval-statements.md`):
 
-> «I approve writing/editing `<files>` for the rescan, including the finalization commit.»
+> «I approve writing/editing `<files>` for `<FEATURE>` v`<X.Y.Z>`, including the finalization commit.» (files: the INDEX)
 
 Approver: {name / handle} — Timestamp: {ISO 8601 UTC} — Files touched: {list}
 
@@ -163,7 +165,7 @@ If zero rows were added and zero drift flips were proposed, the statement collap
 - [ ] §C orphan-spec check executed (zero is a stated result, not silence).
 - [ ] §D explicit zero or populated table.
 - [ ] §E flags use the structured schema; each Evidence column is a `file:line` or SQL ref.
-- [ ] §F drift_probe output included; if missing, manual fallback labeled as such.
+- [ ] §F `specalign drift` output included; if missing, manual fallback labeled as such.
 - [ ] §G pilot recommendation reviewed.
 - [ ] §H budget honored; overrun justified.
 - [ ] §I approval statement in the exact form above.

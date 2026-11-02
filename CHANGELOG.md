@@ -2,6 +2,60 @@
 
 Single version-history home for the SpecAlign skill.
 
+## [1.0.0-dev] — unreleased (branch `v1-production`)
+Production-hardening release. Not yet 1.0.0: the release criteria are in the plan (all evals green, three dry-run
+adoptions, linter clean on the reference corpus).
+
+### Changed — process (breaking: stage numbers)
+- `SKILL.md` is now a ≤150-line router; detail lives in `stages/`, `modes/`, `gates/` and is read per stage. This
+  fixes the 25 KB monolith that compaction truncated.
+- **One canonical stage order, 0–13, no duplicates.** Remediation is an explicit stage (5), the checkpoint comes after
+  all reading (4), verification precedes the draft (6 → 7).
+
+  | New | Stage | Legacy |
+  |---|---|---|
+  | 0–2 | preflight · scope/tier · inventory | 0 · 1 · 2 |
+  | 3 | read (code, data, UI, validation, permissions) | 3–7 |
+  | 4 | anti-pattern scan + checkpoint | 4.5 |
+  | 5 | remediation (new) | — |
+  | 6 | verification | 11 |
+  | 7–10 | draft · Socratic · cross-section · self-check | 8 · 9 · 10 · 12 |
+  | 11 | write gate | 12.5 |
+  | 12 | finalize (+ map sync) | 13 · 13.5 |
+  | 13 | handoff | 14 |
+- Rule 1 and the lifecycle fence reconciled with practice: an explicit **remediating run** (R1) may change the files it
+  lists; live DDL needs its own confirmation (D1). `gates/remediation.md`, `gates/ddl-protocol.md`.
+- Approval statements v2 (fixed the truncated tag/push form; added R1, D1, X1, V1, G1, P1, C1, N1; replies are recorded
+  verbatim). `gates/approval-statements.md`.
+- Disposition vocabulary (Fix / Accept / Defer / Reject) and the rule for shorthand such as "fix all".
+- Versioning policy with a decision tree and **ripple patches**; SYNC procedure with drift classes, legacy
+  normalization and superseded-wording convention. `gates/versioning.md`, `modes/sync.md`.
+- Controlled evidence vocabulary and the DF → AC → evidence chain. `gates/evidence.md`.
+- Data-safety rules in the skill itself: audit logs immutable, scoped cleanup, no bypass of a refusing tool.
+
+### Changed — tooling (`tools/specalign`, stdlib only; `scripts/*.py` kept as wrappers)
+- `registry check` replaces `rescan_check.py`. Fixes: the tag check accepted *any* tag with the F-prefix; check 6 was
+  hard-coded to pass; INDEX status/version/tag were never compared with the spec's §0 Card; the tag prefix ignored the
+  binding; files were read without UTF-8. Now: the exact tag of the INDEX version must exist and its commit must contain
+  that spec version; INDEX ↔ §0 Card must agree; exit codes 0/1/2; `--json` (`specalign.registry/1`).
+- `drift` replaces `drift_probe.py`. Fixes: brace groups, globs and annotations in `Sources` voided the whole feature;
+  the time-window range hid same-second commits; renames were missed. Now: token-level parsing, exact `<tag>..HEAD`
+  range, dead-source report, `--exit-zero`/`--strict`.
+- `install.py`: installs/syncs the global and project copies, LF-normalised, with `INSTALL-MANIFEST.json`; `--check`
+  detects hand edits, missing and out-of-date files; refuses to overwrite hand edits without `--force`.
+- Tests: 69 stdlib `unittest` cases incl. fixture repos (Arabic, CRLF), installer round trip, and a conformance test
+  that keeps the skill's own documents consistent (size budget, no dangling references, no unshipped commands).
+- CI for the skill repo (`.github/workflows/ci.yml`) and a copy-in workflow for adopters (`templates/adopter-ci.yml`).
+
+### Changed — templates
+- Specification template v1.0: skill version, evidence legend, ID conventions, dispositions, superseded-wording and
+  ripple-patch conventions, machine-check block in §14. New `binding.template.md`. Rescan report and handoff README
+  refreshed. Playbook validation matrix extended with traps 18–29 (not yet exercised: "not exercised", never assumed).
+
+### Not yet shipped (planned)
+`lint`, `docedit`, `finalize`, `manifest` (run record / resumable state), `inventory`, DB/UI/test adapters beyond
+documentation, executable evals. The documents say so wherever a step is still manual.
+
 ## [0.11.0] — 2026-08-27
 ### Added — Rescan Hardening (E1–E10)
 - `templates/rescan-report-template.md` — 9-section structured rescan output (A–I) with
