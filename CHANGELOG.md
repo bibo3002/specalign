@@ -36,6 +36,11 @@ adoptions, golden replay met; recorded transcripts for the 17 behavioural rows a
   with the real parser, which also caught a wrong `lint --file` example) and stage 4 (a run with no DF marked Fix is
   documentation-only and asks for no R1).
 
+- `docedit insert-block` / finalize op `insert-block`: adds a block a legacy spec lacks (F4 had no §13D) without touching an
+  existing one. Follow-up recording `evals/runs/2026-11-02-after-fixes/` (rows 4, 5, 9) after the stage-4 fix and
+  `references/cli.md`: no R1 requested in a documentation-only run, and every `specalign` command in them parses with
+  the real parser (a test pins this; five of the first-round transcripts had invented syntax).
+
 ### Fixed — found in the field
 - Sanad's registry workflow had **failed on every push** since it was added: it called `.opencode/skills/...` while git
   tracks `.opencode/Skills/...` and Linux runners are case-sensitive. The adopter workflow now locates the skill
