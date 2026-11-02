@@ -15,8 +15,10 @@ otherwise): `VERSION`, `tools/specalign/__init__.py`, the title of `SKILL.md`, a
 | Golden finalization replay | **met** — F6's real finalization edits replayed with `finalize` give byte-identical spec and registry, and a second apply changes nothing |
 | Documented install / update / rollback | **met** — `README.md`, `install.py --check`, section below |
 
-Release the version as `1.0.0` only when the behavioural row is met or the owner accepts it explicitly in the
-release notes. Until then the build is `1.0.0-dev`; a release candidate may be tagged `v1.0.0-rc.N`.
+**1.0.0 was released on 2026-11-02** after the owner, told these caveats in full, asked for the merge and the tag:
+simulated behavioural evidence, a single real adopting project, untested MySQL/SQLite queries. A version released with a
+criterion only partly met says so here; the next release should close them (live-tool recordings with rules fixed in
+advance, a second real project). A release candidate is tagged `v1.0.0-rc.N`.
 
 ## Cutting a release
 

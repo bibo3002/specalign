@@ -3,7 +3,7 @@ name: specalign
 description: Use when documenting an existing feature of a codebase into an executable specification, when a spec may have drifted from the code, live database, or runtime behavior, when verifying spec-to-reality alignment, or when reverse-engineering undocumented features. Triggers on document feature, extract spec, sync spec, spec drift, executable specification, reverse-engineer feature, GENESIS, SYNC, align spec, توثيق ميزة، مواصفة، مزامنة المواصفة.
 ---
 
-# SpecAlign (v1.0.0-dev)
+# SpecAlign (v1.0.0)
 
 SpecAlign **extracts and maintains executable, agent-readable specifications for existing features**, validated
 against a **triple source of truth**: the code, the live database, and observed runtime behaviour — never code

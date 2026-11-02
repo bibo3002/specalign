@@ -5,8 +5,8 @@ features, validating every claim against a triple source of truth — **code, li
 GENESIS reverse-engineers undocumented features; SYNC realigns existing docs with reality. Supersedes
 `brownfield-spec` (retired 2026-08-25).
 
-> **Status: 1.0.0-dev** (branch `v1-production`). See `CHANGELOG.md` for what changed from 0.11.0 and what is still
-> planned. The version flips to 1.0.0 only when the release criteria are met (evals green, three dry-run adoptions).
+> **Status: 1.0.0** (released 2026-11-02). See `CHANGELOG.md` for what changed from 0.11.0 and `RELEASING.md` for the
+> criteria, the caveats that were accepted at release, and how to update an installed copy.
 
 ## Invocation
 

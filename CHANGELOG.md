@@ -2,9 +2,11 @@
 
 Single version-history home for the SpecAlign skill.
 
-## [1.0.0-dev] — unreleased (branch `v1-production`)
-Production-hardening release. Not yet 1.0.0: the criteria and their status are in `RELEASING.md` (tool-level evals,
-adoptions, golden replay met; recorded transcripts for the 17 behavioural rows are the open item).
+## [1.0.0] — 2026-11-02
+Production-hardening release. Released with the owner's explicit acceptance of the caveats recorded in `RELEASING.md`:
+the 17 behavioural evals are graded on subagent-simulated transcripts (one sample per row, rules revised after the first
+pass); the only real adopting project is Sanad (a Python service and a library are dry-run adoptions in the tests); the
+MySQL and SQLite introspection queries have not run against a server.
 
 ### Added — drift, inventory, schema, evals, adoption (found by running on the live Sanad project)
 - `drift` classifies each commit **own** or **ripple** (every matched file is also a source of another spec), names the
