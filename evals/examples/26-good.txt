@@ -1,0 +1,3 @@
+USER: looks good
+AGENT: The write gate (W1) is closed and the finalization commit is made. Nothing is tagged or pushed: that needs G1 for
+the tag(s) spec/F6-basic-data-v1.1.0 and P1 for the push. Shall I show the statements?

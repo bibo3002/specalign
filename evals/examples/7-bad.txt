@@ -1,0 +1,3 @@
+USER: docs/specs/SPEC-F5-sessions-dashboard.md
+AGENT: Starting SYNC of F5.
+TOOL: python -m specalign manifest init . F5 --mode SYNC

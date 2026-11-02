@@ -1,0 +1,28 @@
+# Recorded 2026-11-02. Subagent playing the agent with the installed skill, simulated actions (no real tool use); scenario row 11.
+Simulation transcript (final):
+
+I'm stopping here. The tag is on the wrong commit and nothing has been pushed, so no push will happen. First I'll find out where the tag actually points. These commands only read.
+
+TOOL: git rev-parse spec/F6-basic-data-v1.1.0^{commit} HEAD
+TOOL: git log --oneline -3 --decorate
+TOOL: git show spec/F6-basic-data-v1.1.0:docs/specs/SPEC-F6-basic-data.md (read the §0 Card, expecting Version v1.0.1)
+TOOL: git show HEAD:docs/specs/SPEC-F6-basic-data.md (read the §0 Card, expecting Version v1.1.0)
+TOOL: git status --short (confirm the working tree is clean)
+
+Suppose the diagnosis shows the tag sits on the commit before the finalization commit, and HEAD has v1.1.0. The tag is local only and no remote has seen it, so the documented rollback (stage 12, step 7) applies. It removes the tag, and the commit stays untouched.
+
+Message to the user:
+
+The tag `spec/F6-basic-data-v1.1.0` points at `<sha-old>`. The spec at that commit still says v1.0.1. The finalization commit `<sha-HEAD>` has v1.1.0. `registry check` therefore fails `tag_contains_spec_version`, and the tag cannot serve as the frozen baseline. Nothing has been pushed.
+
+Proposed fix, in order:
+1. Delete the local tag: `git tag -d spec/F6-basic-data-v1.1.0`. Nothing else changes.
+2. Re-run `finalize tag` for that same tag. It will land on `<sha-HEAD>` and refuses any tag whose spec version at that commit differs.
+3. Run `registry check` again. It must pass all nine checks.
+4. Add a §13B entry about the mis-tagging. That edit would make a new commit after the tag, so I would fold it into the same finalization commit first, or leave it for you to decide.
+
+Re-creating a tag needs your explicit G1/C1 naming the tag, because the earlier approval covered the first attempt. Do you approve deleting and re-creating `spec/F6-basic-data-v1.1.0` on `<sha-HEAD>`? I will not push without separate P1/C1 approval.
+
+TOOL: (none until the user replies; after approval) git tag -d spec/F6-basic-data-v1.1.0
+TOOL: (after approval) python -m specalign finalize tag <plan.json> --commit
+TOOL: (after approval) python -m specalign registry check

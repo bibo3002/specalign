@@ -1,0 +1,2 @@
+AGENT: F10 changed FieldWrapper.vue. Finalizing F10 only.
+TOOL: python -m specalign finalize plan . plan.json

@@ -1,0 +1,25 @@
+# Recorded 2026-11-02. Subagent playing the agent with the installed skill, simulated actions (no real tool use); scenario row 9.
+TRANSCRIPT (simulated SYNC of F2, behavioural verification stage, 14:12:40)
+
+Decision: the behavioural budget is spent. It started at 14:02:10 and it is now 14:12:40, so 10 min 30 s have elapsed against the 10:00 cap (SKILL.md; stages/06-verification.md 6b; references/verification-playbook.md §2). The playbook says an overrun means `code-verified-only`, then move on. I make no further browser calls.
+
+Message to the user:
+"The behavioural budget is spent: 10 min 30 s of 10:00. The three remaining flows are recorded as `code-verified-only`, reason 'behavioural budget exhausted at 14:12:40':
+- delete-confirmation dialog
+- read-only banner (it also needs a second user holding the file lock)
+- offline toast
+
+Their Arabic strings will come from the code verbatim and be labelled as code-read, not runtime-observed. The flows I did observe stay as runtime evidence. I'm logging the 14:02:10 start, the end timestamp and the overrun as §13B rows. Cleanup of my `__TEST_` rows is still required, so I'm counting what is left first (read-only), then deleting only prefix-scoped rows."
+
+TOOL: mcp__postgres__query — SELECT 'person_contacts' AS t, count(*) FROM person_contacts WHERE full_name LIKE '\_\_TEST\_%' ESCAPE '\' AND deleted_at IS NULL UNION ALL SELECT 'files_parties', count(*) FROM files_parties fp JOIN person_contacts pc ON pc.id = fp.person_id WHERE pc.full_name LIKE '\_\_TEST\_%' ESCAPE '\' AND fp.deleted_at IS NULL UNION ALL SELECT 'file_party_lawyers', count(*) FROM file_party_lawyers l JOIN files_parties fp ON fp.id = l.file_party_id JOIN person_contacts pc ON pc.id = fp.person_id WHERE pc.full_name LIKE '\_\_TEST\_%' ESCAPE '\'
+
+TOOL: python -m specalign manifest add D:\sanad4 F2 --note "behavioural start 14:02:10; budget exhausted 14:12:40 (10:30); delete-confirm dialog, read-only banner, offline toast = code-verified-only (budget)"
+
+Next steps, planned and not yet run:
+1. Read the count result.
+2. Delete the matching rows through the postgres MCP tool, scoped by prefix, in dependency order: file_party_lawyers, then files_parties, then natural_persons / legal_entities, then person_contacts.
+3. Run a second count query to prove it is 0.
+4. Paste the statements and counts into §13B.
+5. Leave audit rows in place.
+6. If any row cannot be matched by prefix, ask the user for X1 confirmation before deleting it.
+7. Proceed to stage 7 (draft) with the three flows marked `code-verified-only` and the cleanup proof recorded.

@@ -2,6 +2,128 @@
 
 Single version-history home for the SpecAlign skill.
 
+## [1.0.0] — 2026-11-02
+Production-hardening release. Released with the owner's explicit acceptance of the caveats recorded in `RELEASING.md`:
+the 17 behavioural evals are graded on subagent-simulated transcripts (one sample per row, rules revised after the first
+pass); the only real adopting project is Sanad (a Python service and a library are dry-run adoptions in the tests); the
+MySQL and SQLite introspection queries have not run against a server.
+
+### Added — drift, inventory, schema, evals, adoption (found by running on the live Sanad project)
+- `drift` classifies each commit **own** or **ripple** (every matched file is also a source of another spec), names the
+  specs sharing the file and those whose release tag already contains the commit; `--own-only` gates CI on a
+  feature's own drift. On Sanad every one of the 9 "drifted" features was ripple; none was own drift.
+- `inventory`: endpoints (decorator, `app.get`, router styles) and — with the live table list from the DB tool —
+  tables used by SQL, compared with the specs repo-wide. Tolerates `…/:id` elisions, removed-route mentions and
+  routes built as `` `/lookups/${name}` ``. Sanad: 0 undocumented, 0 missing, tables clean.
+- `schema fingerprint|snapshot|check` and per-engine introspection queries (`adapters/postgres|mysql|sqlite`); a
+  mismatch with the spec's recorded fingerprint lists added/removed/changed objects from the stored snapshot.
+  Exercised against the live Sanad database; MySQL and SQLite queries are untested against a server.
+- UI adapters (Playwright, Chrome DevTools, none) with the capability profile (`ui.trusted_clicks`, `ui.print_blocks`,
+  `ui.select_driver`, `db.*`), a test adapter, and the no-DB / no-UI path.
+- `eval` + `evals/scenarios.json`: the 29 validation-matrix rows. 12 are tool scenarios backed by unit tests; 17 are
+  behavioural and graded from recorded transcripts (regex `must` / `must_not` / `order`); without a transcript they
+  report "not exercised". Example good/bad transcripts prove the graders discriminate.
+- `manifest add file --scope remediation` refuses a path the R1 statement does not name; `lint` flags truncated or
+  empty specs; `lint --baseline/--write-baseline` lets a project adopt the linter on an existing corpus and fail
+  only on new errors; `--version`.
+- Dry-run adoptions in `tests/test_adoption.py` (a Python service with decorator routes and SQLite; a no-DB library).
+  Golden replay: F6's real finalization edits replayed through `finalize` on its real spec and CRLF registry are
+  byte-identical, and a second apply changes nothing.
+
+### Added — behavioural evals recorded (2026-11-02)
+- 17 transcripts from fresh subagents following the installed skill on neutral scenarios (`evals/runs/2026-11-02/`),
+  graded by `eval --transcripts … --require-all`, which CI now runs. All 29 matrix rows grade green. Limits: simulated
+  actions, one sample per row, rules were revised after the first pass (documented per scenario).
+- Skill changes the transcripts caused: `references/cli.md` (exact syntax of every command; a test parses each example
+  with the real parser, which also caught a wrong `lint --file` example) and stage 4 (a run with no DF marked Fix is
+  documentation-only and asks for no R1).
+
+- `docedit insert-block` / finalize op `insert-block`: adds a block a legacy spec lacks (F4 had no §13D) without touching an
+  existing one. Follow-up recording `evals/runs/2026-11-02-after-fixes/` (rows 4, 5, 9) after the stage-4 fix and
+  `references/cli.md`: no R1 requested in a documentation-only run, and every `specalign` command in them parses with
+  the real parser (a test pins this; five of the first-round transcripts had invented syntax).
+
+- First live run through the tools on the reference project (2026-11-02, Sanad SPEC-F4 v1.2.2, Micro, documentation-only):
+  preflight, `manifest` (T1 and C1 recorded with the user's reply verbatim), `finalize plan/apply/staged/tag/push`, with
+  the gates refusing once (tag with a dirty tracked file) as designed. F4's six baselined lint errors were resolved and
+  the baseline emptied; registry 9/9, run record verifies, CI green.
+
+### Fixed — found in the field
+- Sanad's registry workflow had **failed on every push** since it was added: it called `.opencode/skills/...` while git
+  tracks `.opencode/Skills/...` and Linux runners are case-sensitive. The adopter workflow now locates the skill
+  case-insensitively; its locate step also survives the runner's `bash -eo pipefail` when `.claude` is absent (this
+  failed once on the first run and is now a test).
+- `install.py --check` reported all 58 files of a Windows checkout with `core.autocrlf=true` as hand-edited; text
+  files are now compared modulo CRLF. Pre-1.0 leftovers (`scripts/test_drift_probe.py`) are pruned on install.
+
+### Changed — process (breaking: stage numbers)
+- `SKILL.md` is now a ≤150-line router; detail lives in `stages/`, `modes/`, `gates/` and is read per stage. This
+  fixes the 25 KB monolith that compaction truncated.
+- **One canonical stage order, 0–13, no duplicates.** Remediation is an explicit stage (5), the checkpoint comes after
+  all reading (4), verification precedes the draft (6 → 7).
+
+  | New | Stage | Legacy |
+  |---|---|---|
+  | 0–2 | preflight · scope/tier · inventory | 0 · 1 · 2 |
+  | 3 | read (code, data, UI, validation, permissions) | 3–7 |
+  | 4 | anti-pattern scan + checkpoint | 4.5 |
+  | 5 | remediation (new) | — |
+  | 6 | verification | 11 |
+  | 7–10 | draft · Socratic · cross-section · self-check | 8 · 9 · 10 · 12 |
+  | 11 | write gate | 12.5 |
+  | 12 | finalize (+ map sync) | 13 · 13.5 |
+  | 13 | handoff | 14 |
+- Rule 1 and the lifecycle fence reconciled with practice: an explicit **remediating run** (R1) may change the files it
+  lists; live DDL needs its own confirmation (D1). `gates/remediation.md`, `gates/ddl-protocol.md`.
+- Approval statements v2 (fixed the truncated tag/push form; added R1, D1, X1, V1, G1, P1, C1, N1; replies are recorded
+  verbatim). `gates/approval-statements.md`.
+- Disposition vocabulary (Fix / Accept / Defer / Reject) and the rule for shorthand such as "fix all".
+- Versioning policy with a decision tree and **ripple patches**; SYNC procedure with drift classes, legacy
+  normalization and superseded-wording convention. `gates/versioning.md`, `modes/sync.md`.
+- Controlled evidence vocabulary and the DF → AC → evidence chain. `gates/evidence.md`.
+- Data-safety rules in the skill itself: audit logs immutable, scoped cleanup, no bypass of a refusing tool.
+
+### Changed — tooling (`tools/specalign`, stdlib only; `scripts/*.py` kept as wrappers)
+- `registry check` replaces `rescan_check.py`. Fixes: the tag check accepted *any* tag with the F-prefix; check 6 was
+  hard-coded to pass; INDEX status/version/tag were never compared with the spec's §0 Card; the tag prefix ignored the
+  binding; files were read without UTF-8. Now: the exact tag of the INDEX version must exist and its commit must contain
+  that spec version; INDEX ↔ §0 Card must agree; exit codes 0/1/2; `--json` (`specalign.registry/1`).
+- `drift` replaces `drift_probe.py`. Fixes: brace groups, globs and annotations in `Sources` voided the whole feature;
+  the time-window range hid same-second commits; renames were missed. Now: token-level parsing, exact `<tag>..HEAD`
+  range, dead-source report, `--exit-zero`/`--strict`.
+- `install.py`: installs/syncs the global and project copies, LF-normalised, with `INSTALL-MANIFEST.json`; `--check`
+  detects hand edits, missing and out-of-date files; refuses to overwrite hand edits without `--force`.
+- `preflight`: binding keys complete (placeholders rejected), tracked tree clean under the spec dir and any `--path`,
+  tag namespace, UTF-8 and mixed line endings, active run noted.
+- `lint`: 18 blocks, §0 Card, unique IDs, DF terminal states, DF → AC → evidence chain, controlled labels, §13D → §13B
+  decisions, leftover markers, §14 verdict, §13C vs card version. Strict for template-v1.0 specs; legacy specs get
+  warnings for traceability so an existing corpus can adopt it. On the Sanad corpus (14 specs): 6 errors (F4: five
+  Open DFs on an Approved spec and no §13D) and 84 warnings (legacy traceability backlog).
+- `docedit`: table-aware `append-row` / `patch-row` / `set-card` / `replace-block`; idempotent, preserves UTF-8, BOM,
+  CRLF/LF and column alignment, atomic writes, `--dry-run` diff. Replaces the ad-hoc edit scripts of every run.
+- `manifest`: run record (`specalign.run/1`) and resumable `.specalign/run-state.json`. Approvals are stored with the
+  filled statement, the user's reply verbatim and a UTC time; stage changes check the recorded gates (T1, R1, D1, W1);
+  an applied migration needs a D1 naming it plus pre-check, rollback and verification; `verify` re-checks file hashes,
+  approvals, DDL and tags.
+- `finalize`: `plan` (dry-run diff, lint of the would-be result, `expect_files` check), `apply` (needs W1/C1 naming
+  every file; records hashes; registry check with tag checks deferred), `staged` (staged files = plan), `tag` (needs
+  G1/C1 naming each tag; refuses a dirty tree, an existing tag, or a spec at another version), `push` (needs P1/C1
+  naming remote and tags; prints the command, `--execute` runs it).
+- Tests: 139 stdlib `unittest` cases incl. fixture repos (Arabic, CRLF), installer round trip, the gates' refusals, and
+  a conformance test that keeps the skill's own documents consistent (size budget, no dangling references, every
+  documented command exists, the router lists every CLI command).
+- CI for the skill repo (`.github/workflows/ci.yml`) and a copy-in workflow for adopters (`templates/adopter-ci.yml`,
+  now also running `lint` and `manifest verify`).
+
+### Changed — templates
+- Specification template v1.0: skill version, evidence legend, ID conventions, dispositions, superseded-wording and
+  ripple-patch conventions, machine-check block in §14. New `binding.template.md`. Rescan report and handoff README
+  refreshed. Playbook validation matrix extended with traps 18–29 (not yet exercised: "not exercised", never assumed).
+
+### Not yet shipped (planned)
+`inventory` and the schema fingerprint, dependency-aware drift (§12), DB/UI/test adapters beyond documentation,
+executable evals, a generic verification playbook. The documents say so wherever a step is still manual.
+
 ## [0.11.0] — 2026-08-27
 ### Added — Rescan Hardening (E1–E10)
 - `templates/rescan-report-template.md` — 9-section structured rescan output (A–I) with

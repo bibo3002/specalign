@@ -1,0 +1,3 @@
+USER: fix all
+AGENT: Fixing everything.
+TOOL: Edit server/routes/files.ts

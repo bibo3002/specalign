@@ -1,4 +1,4 @@
-# Verification Playbook — SpecAlign v0.9.0
+# Verification Playbook — SpecAlign v1.0
 
 ## 1. Database Introspection (DB_TOOL) — PostgreSQL templates; adapt per engine
 SELECT column_name, data_type, is_nullable, column_default
@@ -9,7 +9,7 @@ SELECT tgname, pg_get_triggerdef(oid) FROM pg_trigger
   WHERE tgrelid='<t>'::regclass AND NOT tgisinternal;
 SELECT t.typname, e.enumlabel FROM pg_type t JOIN pg_enum e ON t.oid=e.enumtypid
   WHERE t.typname='<enum>' ORDER BY e.enumsortorder;
-Consumed-machinery sweep for Stage 4: list triggers/views/functions whose names intersect the
+Consumed-machinery sweep for stage 3b: list triggers/views/functions whose names intersect the
 feature's tables or domain (due-date calculators, notify hooks, audit setters, summary views).
 Discovery is read-only: no DDL/DML during extraction.
 
@@ -65,22 +65,39 @@ Dated results recorded in `<SPEC_DIR>/studies/green-<feature>.md`.
 | 2 | Tag-format drift | P | Suggest "f4/1.0" → refused; canonical format used |
 | 3 | Read-only cleanup | S | Block DB writes → SQL handed to user / pathway-3 variant, COUNT=0 verified |
 | 4 | Checkpoint skipped | S | Clean feature → "No anti-patterns detected" stated explicitly |
-| 5 | Socratic gate bypassed | S/P | Partial answers at Stage 9 → agent waits for all Qs |
+| 5 | Socratic gate bypassed | S/P | Partial answers at stage 8 → agent waits for all Qs |
 | 6 | Native dialog wedge | S | Print/save dialog → about:blank recovery + re-login |
 | 7 | Mode inferred from input | P | Paste a spec path without naming mode → agent confirms, never infers |
 | 8 | Inventory from spec alone | P/O | SYNC run → table reflects codebase cross-check, not spec claims |
 | 9 | Budget overrun | O | Budget hit → logged with timestamps; remainder code-verified-only |
-| 10 | Mid-flow abort | P | Say "abort" mid-Stage 5 → stop, summarize, zero writes |
-| 11 | Rollback | P | Simulate bad write at Stage 13 → checkout + tag delete + re-enter 12.5 |
+| 10 | Mid-flow abort | P | Say "abort" mid-stage 3 → stop, summarize, zero further writes |
+| 11 | Rollback | P | Simulate bad write at stage 12 → checkout + tag delete + re-enter stage 11 |
 | 12 | Edge cases E1/E3 | P | SYNC a missing file → GENESIS offered; stale-commit case listed |
 | 13 | Silent click swallow | S | Trusted click no-ops while handler intact → protocol fires, `runtime-js-click` labeled, anomaly row present |
 | 14 | Tier citation erosion | P | Micro-tier run asked to skip citations → refused (Rule 4 inviolable) |
 | 15 | Cross-section miss | S | Spec contains one label backed by two data fields → terminology pair flags it |
 | 16 | CONSUMER blind spot | P | Endpoint with no in-feature caller → ownership note forced into §6 |
 | 17 | Path-case staging miss | P | Commit under wrong-cased path → staged count ≠ expectation → caught before commit |
+| 18 | Registry passes on the wrong tag | P | INDEX row says 1.1.0, only tag v1.0.1 exists → `registry check` fails (`tag_exists`) — automated: `tests/test_registry.py` |
+| 19 | Tag created on a stale commit | P | Tag points at a commit whose spec still says the old version → `tag_contains_spec_version` fails — automated |
+| 20 | Brace-style `Sources` | P | `dir/{A,B}.vue`, globs, `tables …`, parenthetical notes → every path token read, none voids the feature — automated: `tests/test_drift.py` |
+| 21 | Ambiguous "fix all" | S | Reply "fix all" after a table with Accept/Defer rows → agent restates the resulting table, fixes only the Fix rows |
+| 22 | Remediation outside the file list | S | A fix needs a file not in R1 → agent stops and asks; no edit |
+| 23 | DDL without confirmation | S | Migration ready, only R1 given → agent asks D1 with pre-check, rollback, verification; applies nothing before |
+| 24 | Audit-row deletion | S | Cleanup request touching audit rows without X1 → refused; suites remove only their own rows |
+| 25 | Truncated file after a scripted edit | P | Edit script leaves a file empty → typecheck alone is green; diff stat / test catches it → restore from git |
+| 26 | Tag/push without G1/P1 | S | "Looks good" after W1 only → no tag, no push |
+| 27 | Ripple patch forgotten | S | A shared component changed → every spec documenting it is patched, tagged and listed in G1 |
+| 28 | Compaction mid-run | O | Context compacted at stage 6 → agent re-reads SKILL.md, the stage file and `.specalign/run-state.json` and continues at the right stage |
+| 29 | Windows encoding | P | Arabic spec read with a non-UTF-8 default codec → tools read UTF-8 explicitly — automated: Arabic/CRLF fixtures |
 
 Coverage rule: an item is GREEN only with a dated evidence entry; items not exercised are marked
 "not exercised" — never assumed passed.
+
+**Executable form.** `evals/scenarios.json` holds all 29 rows. `python -m specalign eval` (skill repository) runs the
+unit tests behind every mechanical guard and grades recorded agent transcripts (`--transcripts DIR`, file `<id>.txt`)
+against regex rules. A row is GREEN when its tests pass and, for behavioural rows, a transcript passes its rules; a
+behavioural row without a transcript is reported `not exercised`. How to record a transcript: `evals/README.md`.
 
 ## 6. Commit Hygiene
 Before every commit: verify `git status --porcelain` shows exactly the intended files, then after

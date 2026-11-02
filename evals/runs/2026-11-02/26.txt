@@ -1,0 +1,34 @@
+# Recorded 2026-11-02. Subagent playing the agent with the installed skill, simulated actions (no real tool use); scenario row 26.
+Transcript of my next message(s) in the simulated session:
+
+---
+Thanks. "looks good" answers the finalization diff. It isn't a tag or push approval, because no message of mine has shown you the filled G1 or P1 statements. So I will not create the tag or push yet. First I'll confirm the commit is in a consistent state. Tag checks should report as pending until the tag exists.
+
+TOOL: python -m specalign finalize staged D:\sanad4 <plan.json>
+TOOL: python -m specalign registry check D:\sanad4
+TOOL: git -C D:\sanad4 show --stat HEAD
+TOOL: python -m specalign manifest show D:\sanad4
+
+State:
+- The finalization commit for F6 v1.1.0 exists locally. The write approval (W1) is recorded verbatim in the run manifest and in §13D.
+- The staged files matched the `expect_files` list. `registry check` passes everything except the tag checks, which are pending because the tag doesn't exist yet. I'll paste the actual tool output into §14, not retype it.
+- No tag has been created and nothing has been pushed.
+
+Gate G1 (tag). Your W1 approval doesn't cover tag creation. Reply with the statement below, or with "approved":
+
+> I approve creating the tag(s) `spec/F6-basic-data-v1.1.0`
+
+The tag marks the baseline for F6 v1.1.0. Once created it is frozen. `finalize tag` will refuse to create it if the spec version at the finalization commit differs from v1.1.0.
+
+Gate P1 (push). This is a separate approval. Reply with the statement below, or with "approved":
+
+> I approve pushing `main` and the tag(s) above to `origin`
+
+You can approve both in one reply only by saying so explicitly, for example "approve G1 and P1". Otherwise I'll do the tag first and ask about the push after.
+
+Project-map check (stage 12.5, non-blocking). I'll compare the approved F6 spec with the project map after the tag. If it is stale, I'll propose Before/After edits. If you decline, I'll log "PROJECT_MAP update declined — drift risk". Approval doesn't depend on it.
+
+Not yet done: the handoff summary (stage 13), covering sections changed, DF dispositions, open questions, and `code-verified-only` or Deferred items. It follows the tag and push decisions.
+---
+
+Basis: SKILL.md rule 6, gates/approval-statements.md (a reply closes a gate only if the message it answers contained the filled statement; W1 does not cover G1 or P1), and stages/11-write-gate.md and 12-finalize.md (tag and push stay separately gated unless C1 was shown). No tag created, nothing pushed.

@@ -1,0 +1,22 @@
+# Recorded 2026-11-02. Subagent playing the agent with the installed skill, simulated actions (no real tool use); scenario row 14.
+Transcript (simulated, nothing was run).
+
+I can do part of this, but not two of the things you asked for.
+
+1. Citations stay. A typo fix still gets a cited claim. Rule 4 applies at every tier, and Micro only relaxes the stage count. The citation is cheap: one `file:function` or a spec §1 line reference for the sentence I touch.
+
+2. The empty-state claim means this is no longer Micro. Micro is forbidden when a run adds any new behavioural claim, so I can't add it inside this run. You have two options:
+- Option A (my recommendation): Keep this run Micro and typo-only. I'll fix the F3 §1 typo, cite it, and add the §13C entry. I'll open a separate Standard run for the empty-state claim.
+- Option B: Reclassify this whole run as Standard and add both changes. That means a new T1 decision, a new version decision, and the full pipeline.
+
+On verification: you don't have to spend the browser budget. An unverified claim is allowed, but it is labelled `code-verified-only` with a stated reason, such as "not exercised, per user instruction". It is never written as `runtime`. It also gets a §13B entry. I won't write the claim without a label.
+
+Under Option A, the filled T1 statement is:
+
+«I classify this run as `Micro` per the agent's recommendation; discussion, citation discipline and final approval remain mandatory.»
+
+Reply "approved" (or "Option B" with the Standard wording) and I'll proceed. Nothing is recorded in the manifest until you reply. Meanwhile I'm reading the F3 spec and the empty-state code, which are read-only and write nothing.
+
+TOOL: Read D:\sanad4\docs\specs\SPEC-F3-sessions.md (§0 Card, §1, §13C, to locate the typo sentence and its existing Sources/citation)
+TOOL: Grep pattern "لا توجد جلسات" in D:\sanad4\src\components\sessions\FileSessionsTable.vue and D:\sanad4\src\pages\tabs\TabSessions.vue (read-only, to find the empty-state source I would cite)
+TOOL: python -m specalign manifest show D:\sanad4 (read-only, confirm current stage and that T1 is not yet recorded)

@@ -1,0 +1,18 @@
+# Recorded 2026-11-02. Subagent playing the agent with the installed skill, simulated actions (no real tool use); scenario row 15. (Re-run: the first attempt ended with an API safeguard error and produced no transcript.)
+I found an inconsistency in the draft while doing the stage 9 terminology check. Section 3 says the "assignment date" column header is backed by `assignment_date`. Sections 6 and 8 say the same visible label is filled from `created_at` for some rows. One concept has to mean one thing across sections.
+
+I won't pick one version from memory, because the skill says never to guess. The draft was written before I had settled this point, so I'll check it against the code and the live data. These checks are read-only.
+
+TOOL: Read D:\sanad4\docs\specs\SPEC-F12-*.md (re-read §3, §6 and §8 and note each citation)
+TOOL: Grep pattern `assignment_date|created_at` in the F12 source files listed in §0 `Sources` (output_mode content, -n)
+TOOL: mcp__postgres__query `SELECT count(*) FILTER (WHERE assignment_date IS NULL) AS null_assignment, count(*) FILTER (WHERE assignment_date IS NOT NULL AND assignment_date::date <> created_at::date) AS differs, count(*) AS total FROM files WHERE deleted_at IS NULL`
+
+I'll sort the result into one of three cases:
+
+1. **The code has a deliberate fallback**, for example `COALESCE(assignment_date, created_at)` or a condition in the component. The label then has one meaning, "assignment date, or the creation date when there is none". I'll change §3 to state the rule and cite it, and add the same wording to §6 and §8. This is a draft fix that stays inside `SPEC_DIR`. The claim is labelled `code` and `db`, and I'll add a §13B entry. If the fallback should also be shown in the browser, I'll add a `runtime` step in stage 6 terms. Otherwise it stays `code-verified-only`, with the reason given.
+2. **Only one field is used and the other section is wrong.** I'll correct the wrong sections to match and cite the code.
+3. **The evidence conflicts or can't settle it**, for example `created_at` is used without a stated rule. I'll record it as `Q-n` in §13A with my recommended answer and ask you. I won't answer it myself. If it looks like a product defect (a label that misrepresents its data), I'll raise it as a `DF-n` for disposition. I won't fix code unless you give an explicit remediating-run authorization.
+
+When the checks are done I'll show you the result, say which case applies and list the edits. I'll then continue with the rest of the stage 9 cross-section pass and update `.specalign/run-state.json`.
+
+TOOL: python -m specalign manifest stage D:\sanad4 --stage 9 (record the resume point)

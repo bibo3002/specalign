@@ -1,0 +1,20 @@
+# Re-run 2026-11-02 after references/cli.md. Subagent, simulated actions; scenario row 9 (the run record already exists).
+Simulated transcript for F2 SYNC, stage 6b (behavioural verification). Nothing was run: no commands, no file edits, no repository or database access. I only read the skill files.
+
+The behavioural budget is used up. The first browser call was at 14:02:10 and it was 14:12:40 at the decision point, so 10 min 30 s against the 10-minute cap (SKILL.md, stages/00-preflight.md item 7, stages/06-verification.md, verification-playbook.md section 2). The playbook says an overrun means `code-verified-only`: log it with timestamps, move on, and run no more browser flows.
+
+What I said to the user:
+- The delete-confirmation dialog, the read-only banner and the offline toast are each marked `code-verified-only`, reason "budget overrun". They are not claimed as runtime-observed. §13B will cite their code paths and list them as not exercised.
+- Cleanup still runs, and the end timestamp will include it. The count is checked before any DELETE. If it is above 0 I show the exact statement first and do not guess the scope. Audit rows are not touched.
+- After cleanup I add the end timestamp and the cleanup record (count query and result) to the run record, then move on to stage 7 (draft).
+
+Tool calls I would make, in order:
+1. TOOL: Bash `cd D:/sanad4 && PYTHONPATH=C:/Users/Habib/.claude/skills/specalign/tools python -m specalign manifest add . note --json '{"text": "Behavioural budget overrun: UI_TOOL started 14:02:10, 10 min cap reached at 14:12:10, check at 14:12:40 (10m30s). Not exercised, code-verified-only (budget overrun): delete-confirmation dialog, read-only banner, offline toast. End timestamp follows after cleanup."}'`
+2. TOOL: mcp__postgres__query `SELECT (SELECT count(*) FROM person_contacts WHERE full_name LIKE '\_\_TEST\_%') AS persons, (SELECT count(*) FROM files_parties fp JOIN person_contacts pc ON pc.id = fp.person_id WHERE pc.full_name LIKE '\_\_TEST\_%' AND fp.deleted_at IS NULL) AS active_party_links`
+3. TOOL: mcp__playwright__browser_close
+
+Still to do after those calls, in the live session:
+- `manifest add . cleanup` with the query and its count.
+- Record the end timestamp in the run record and in §13B.
+
+The prefix-scoped count query is the part I am least sure of. The AGENTS.md data model does not say which F2 tables hold `__TEST_` rows, and the session-purposes cleanup it shows is not F2. I used `person_contacts.full_name` and the `files_parties` links as my best guess. Tables the F2 run actually wrote to (for example lawyer links) should be checked before cleanup is called complete.

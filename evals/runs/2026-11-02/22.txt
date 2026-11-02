@@ -1,0 +1,10 @@
+# Recorded 2026-11-02. Subagent playing the agent with the installed skill, simulated actions (no real tool use); scenario row 22.
+I stopped work on DF-4 and edited nothing. The fix needs `src/composables/useFileSave.ts`, which is not on the R1 list the user approved (`server/routes/files.ts` and `tests/api/files.contract.test.ts`). `gates/remediation.md` says touching a file outside R1 needs an amended R1, and `manifest add file --scope remediation` would refuse the path anyway.
+
+The message to the user:
+- It says what DF-4 needs from `useFileSave.ts`, and says whether the change is a contract change or a design decision. If it is, that is settled before any edit.
+- It shows the amended R1 statement filled in: «I authorize a **remediating** run for `F6`: dispositions as in the table above, code/test/DB changes limited to `server/routes/files.ts`, `tests/api/files.contract.test.ts`, `src/composables/useFileSave.ts`. Anything else needs a new confirmation.» A bare yes closes it, and any qualification means I show it again.
+- It notes that live DDL is not covered by R1.
+- It says I continue with the other Fix dispositions inside the two approved files. DF-4 waits for the reply. If the user declines, DF-4 is recorded as deferred in §13B.
+
+TOOL: Bash `python -m specalign manifest show D:\sanad4` (read-only; confirms the recorded R1 file list and the current stage).

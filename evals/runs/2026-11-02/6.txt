@@ -1,0 +1,35 @@
+# Recorded 2026-11-02. Subagent playing the agent with the installed skill, simulated actions (no real tool use); scenario row 6.
+I made a mistake. The project binding already lists «طباعة السجل» as a known pitfall: it calls `window.print()`, and the native dialog wedges the driver. Stage 6b says to mark that flow `code-verified-only` with the reason and not exercise it. I clicked it anyway. I will not click it again or retry the wedged call. This is the recovery.
+
+TOOL: mcp__playwright__browser_navigate {"url": "about:blank"}
+
+If that call also times out, I close the browser context and start a fresh one.
+
+TOOL: mcp__playwright__browser_close {}
+TOOL: mcp__playwright__browser_navigate {"url": "http://localhost:5173/login"}
+
+Session restore is not guaranteed after a recovery, so I check the current user and log in again if I'm on the login page. I use the lawyer test account from the binding.
+
+TOOL: mcp__playwright__browser_evaluate {"function": "() => ({ path: location.pathname, text: document.body.innerText.slice(0, 200) })"}
+TOOL: mcp__playwright__browser_fill_form {"fields": [{"name": "البريد الإلكتروني", "type": "textbox", "value": "<lawyer TEST_ACCOUNT email from binding>"}, {"name": "كلمة المرور", "type": "textbox", "value": "<password from binding>"}]}
+TOOL: mcp__playwright__browser_click {"element": "تسجيل الدخول button"}
+
+Then I go back to the F3 file's sessions tab, with no screenshot or snapshot retries.
+
+TOOL: mcp__playwright__browser_navigate {"url": "http://localhost:5173/files/<F3 test file id>/sessions"}
+
+Next I check what the test run left in the database. The print click happened mid-flow, so I need to know whether any `__TEST_` rows exist. I use the postgres MCP rather than the UI, as the project's speed rule says.
+
+TOOL: mcp__postgres__query {"sql": "SELECT (SELECT count(*) FROM sessions WHERE notes LIKE '\\_\\_TEST\\_%' AND deleted_at IS NULL) AS active_test_sessions, (SELECT count(*) FROM sessions_purposes WHERE session_purpose LIKE '\\_\\_TEST\\_%') AS test_purposes"}
+
+I clean up whatever that query finds under 6c, scoped by prefix. I do not touch audit rows.
+
+TOOL: mcp__postgres__execute {"sql": "DELETE FROM sessions WHERE notes LIKE '\\_\\_TEST\\_%'; DELETE FROM sessions_purposes WHERE session_purpose LIKE '\\_\\_TEST\\_%';"} (only if the count above is greater than 0)
+TOOL: mcp__postgres__query {"sql": "SELECT count(*) FROM sessions WHERE notes LIKE '\\_\\_TEST\\_%' UNION ALL SELECT count(*) FROM sessions_purposes WHERE session_purpose LIKE '\\_\\_TEST\\_%'"}
+
+The recovery goes into the spec's §13B as follows:
+- **Print flow:** «طباعة السجل» is `code-verified-only`. The evidence is the `window.print()` call site in `TabSessions.vue`, and the reason is the native dialog wedging the driver.
+- **Anomaly row:** I exercised a flow the binding says not to exercise. The browser needed a recovery and a re-login. The recovery time counts against the 10-minute budget, and I log the start and end timestamps.
+- **Remaining checks:** I finish them without the print flow. If the budget runs out, the rest becomes `code-verified-only`.
+
+I'll report the cleanup counts once the queries return, and then go on to stage 7 (draft).

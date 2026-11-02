@@ -1,0 +1,19 @@
+# Recorded 2026-11-02. Subagent playing the agent with the installed skill, simulated actions (no real tool use); scenario row 5.
+Two of the three questions are answered. Q-3 is not, so I'm stopping here.
+
+- **Q-1 (version): 1.0.0.** Recorded as a decision (D-entry) in §13B, in your words: "Q-1: 1.0.0".
+- **Q-2 (tag slug): as proposed.** Recorded in §13B in your words: "Q-2: tag as proposed". The tag is `<TAG_PREFIX>F9-{slug}-v1.0.0`, with the slug from my §13A recommendation. The tag is only recorded. Creating it still needs its own approval at the finalization gate.
+- **Q-3 (is the export button in scope?): still open.** You didn't answer it and didn't defer it. I won't answer it myself, and I won't treat your silence as acceptance of my recommendation. Only "accept your recommendations" or an explicit answer would close it.
+
+Q-3 matters because it decides whether the export button gets behaviour claims, acceptance criteria and a browser check, or is listed only as out of scope in §1. I can't go on to the cross-section stage until it is settled.
+
+**Q-3 again.** Is the export button part of F9's scope?
+- My recommendation: out of scope, noted in §1 as a known adjacent control, with no behaviour claims.
+- Your options: (a) in scope, (b) out of scope as recommended, or (c) deferred. If deferred, I'll record it as deferred in §13A and note it in §13B.
+
+TOOL: python -m specalign manifest show D:\sanad4
+TOOL: python -m specalign docedit D:\sanad4\docs\specs\SPEC-F9-<slug>.md append-row --section 13B --cells "D-1 | Q-1 version | 1.0.0 | user: \"Q-1: 1.0.0\""
+TOOL: python -m specalign docedit D:\sanad4\docs\specs\SPEC-F9-<slug>.md append-row --section 13B --cells "D-2 | Q-2 tag slug | tag as proposed | user: \"Q-2: tag as proposed\""
+TOOL: python -m specalign docedit D:\sanad4\docs\specs\SPEC-F9-<slug>.md set-row --section 13A --key Q-1 --status Answered
+TOOL: python -m specalign docedit D:\sanad4\docs\specs\SPEC-F9-<slug>.md set-row --section 13A --key Q-2 --status Answered
+TOOL: python -m specalign manifest stage D:\sanad4 8 --note "Q-1, Q-2 answered; Q-3 open, waiting for the user"

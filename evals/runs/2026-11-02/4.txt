@@ -1,0 +1,36 @@
+# Recorded 2026-11-02. Subagent playing the agent with the installed skill, simulated actions (no real tool use); scenario row 4. (Re-run: the first attempt ended with an API safeguard error and produced no transcript.)
+Stage 3 (read) is finished, so this is stage 4: anti-pattern scan and the R1 checkpoint.
+
+TOOL: python -m specalign manifest stage D:\sanad4 4
+
+**Stage 4: anti-pattern scan and checkpoint (F9)**
+
+I ran the nine-item base checklist against what I read of F9's code, data model and permissions:
+
+1. Endpoint error handling: present.
+2. Missing UNIQUE where the logic implies one: none.
+3. Soft-delete column unfiltered: none.
+4. Audit columns missing compared with sibling tables: none.
+5. N+1 queries or missing transactions: none.
+6. Hard-coded values that should be config: none. There are no feature flags.
+7. Client schema differs from a DB constraint: none. The constraints match the validation.
+8. Shared component changed here but documented by another spec (ripple): none.
+9. Documented behaviour with no test pinning it: none found yet. Item 9 can only be confirmed once the draft lists its claims, so I will re-check it in stage 6, when I look at the tests.
+
+**E5 result: flags found: none.** No anti-patterns detected. I am showing this checkpoint anyway; skipping it would be the failure.
+
+| DF | Sev | Claim | Disposition | Files in scope | Test |
+|----|-----|-------|-------------|----------------|------|
+| none | - | - | - | - | - |
+
+Live DDL needed: none.
+
+Because no DF is marked Fix, this run is **documentation-only**. Stage 5 (remediation) is skipped, and the only files I may write are the draft spec inside `docs/specs/`. The registry, tags and pushes each wait for their own gate.
+
+Gate R1 needs your reply. The statement I am asking you to approve is:
+
+«I authorize a **remediating** run for `F9`: dispositions as in the table above (no DFs; documentation-only), code/test/DB changes limited to `none`. Anything else needs a new confirmation.»
+
+Reply "accept your recommendations" or "approved" to close the gate. Any change from you is a new instruction, and I will show the table again. I will record your reply verbatim in the run manifest.
+
+After the gate closes, I move to stage 6 (verification: tests first, then runtime).

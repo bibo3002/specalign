@@ -1,0 +1,31 @@
+# Re-run 2026-11-02 after the stage-4 fix and references/cli.md. Subagent, simulated actions; scenario row 4.
+Reading is done (stage 3), so this is stage 4, the anti-pattern scan and checkpoint.
+
+TOOL: Read C:\Users\Habib\.claude\skills\specalign\stages\04-checkpoint.md
+TOOL: Read C:\Users\Habib\.claude\skills\specalign\gates\dispositions.md
+TOOL: python -m specalign manifest stage . 4   (advance the run record to stage 4, run type stays documentation-only)
+
+**Stage 4: anti-pattern scan and checkpoint for F9**
+
+I checked the base 9-item list against what I read in the code, the data model and the permissions:
+1. Endpoint error handling: present.
+2. Missing UNIQUE where the logic implies one: none.
+3. Unfiltered soft-delete column: none.
+4. Audit columns missing compared with sibling tables: none.
+5. N+1 queries or a missing transaction: none.
+6. Hard-coded values that belong in config: none, and there are no feature flags.
+7. Client schema differing from a DB constraint: none. The constraints match the validation.
+8. Shared component changed here but documented by another spec (ripple): none.
+9. Documented behaviour with no test pinning it: none found.
+
+**E5 result: none found. No anti-patterns detected.**
+
+| DF | Sev | Claim | Disposition | Files in scope | Test |
+|----|-----|-------|-------------|----------------|------|
+| (no deviation flags) | | | | | |
+
+Live DDL needed: none.
+
+Nothing is marked Fix, so there is nothing to authorize and I am not asking for R1. This run is **documentation-only**. Stage 5 (remediation) is skipped. I will only write the draft spec inside `docs/specs/`.
+
+Please acknowledge this result, for example with "ok" or "continue". Once you do, I will record your reply as a run-record note and move on to stage 6, verification (tests first, then the runtime check).

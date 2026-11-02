@@ -1,0 +1,55 @@
+# Copy to .github/workflows/specalign.yml in the adopting project.
+# Needs the skill installed in the repo: `python <specalign>/install.py --project .`
+# The skill directory is located case-insensitively: Windows and macOS checkouts often track `.opencode/Skills/`
+# while Linux runners are case-sensitive (a hard-coded lower-case path made one project's CI fail on every push).
+name: specalign
+on:
+  push:
+    paths: ["docs/specs/**", ".opencode/[Ss]kills/specalign/**", "src/**", "server/**"]
+  pull_request:
+    paths: ["docs/specs/**", ".opencode/[Ss]kills/specalign/**", "src/**", "server/**"]
+
+jobs:
+  registry:
+    name: Registry Consistency Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # tags and history are part of the evidence
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Locate the installed skill
+        run: |
+          # the runner shell is `bash -eo pipefail`: a missing search root must not abort the step
+          tools="$( (find .opencode .claude -maxdepth 4 -type d -ipath '*/skills/specalign/tools' 2>/dev/null || true) | head -1)"
+          if [ -z "$tools" ]; then echo "::error::SpecAlign is not installed in this repository (run install.py --project .)"; exit 1; fi
+          echo "SKILL_TOOLS=$tools" >> "$GITHUB_ENV"
+        shell: bash
+      - name: Registry check (blocking)
+        run: PYTHONPATH="$SKILL_TOOLS" python -m specalign registry check .
+        shell: bash
+      - name: Spec lint (new errors block; warnings are the legacy-normalisation backlog)
+        run: |
+          baseline=""
+          if [ -f docs/specs/lint-baseline.json ]; then baseline="--baseline docs/specs/lint-baseline.json"; fi
+          PYTHONPATH="$SKILL_TOOLS" python -m specalign lint . --no-warnings $baseline
+        shell: bash
+      - name: Run records are intact (hashes, approvals, DDL, tags)
+        run: |
+          shopt -s nullglob
+          for run in docs/specs/runs/*.json; do
+            PYTHONPATH="$SKILL_TOOLS" python -m specalign manifest verify . --run "$run" || exit 1
+          done
+        shell: bash
+      - name: Own drift (blocking) — a feature's own sources changed after its release tag without a SYNC
+        # Remove --own-only's exit effect with `|| true` if you want this informational at first.
+        run: PYTHONPATH="$SKILL_TOOLS" python -m specalign drift . --own-only
+        shell: bash
+      - name: Ripple drift and inventory (informational)
+        run: |
+          PYTHONPATH="$SKILL_TOOLS" python -m specalign drift . --exit-zero
+          PYTHONPATH="$SKILL_TOOLS" python -m specalign inventory .
+        shell: bash

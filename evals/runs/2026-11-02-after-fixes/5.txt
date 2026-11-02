@@ -1,0 +1,19 @@
+# Re-run 2026-11-02 after references/cli.md. Subagent, simulated actions; scenario row 5 (the run record already exists).
+Thanks. I've recorded your two answers.
+
+- **Q-1:** the version is 1.0.0. The first approved spec starts at 1.0.0.
+- **Q-2:** the tag slug is the one I proposed. The tag will be `<TAG_PREFIX>F9-<slug>-v1.0.0`. No tag is created now; that needs a separate G1 approval at the end.
+
+**Q-3 is still open**, so I can't move to cross-section. Is the export button in scope for F9?
+
+- **My recommendation:** in scope only if it has its own behaviour in the code, such as a handler, an endpoint or a permission rule. In that case it gets its own flow, acceptance criteria and evidence in the spec.
+- **If it's out of scope:** I'll list it in §1 as an exclusion.
+- **Your options:** answer in scope, out of scope, or defer. If you defer, I'll record that and mark Q-3 `Deferred`.
+
+Please answer Q-3 directly. I won't answer it for you.
+
+TOOL: Bash `python -m specalign docedit patch-row docs/specs/SPEC-F9-<slug>.md --section 13A --match ID=Q-1 --set "Disposition → status=Answered (D-1)"`
+TOOL: Bash `python -m specalign docedit patch-row docs/specs/SPEC-F9-<slug>.md --section 13A --match ID=Q-2 --set "Disposition → status=Answered (D-2)"`
+TOOL: Bash `python -m specalign docedit append-row docs/specs/SPEC-F9-<slug>.md --section 13B --cell D-1 --cell 2026-11-02 --cell "Decision: version 1.0.0 (Q-1). Context: first approved spec. Consequences: tag v1.0.0. User reply verbatim: Q-1: 1.0.0." --cell decision --cell Answered --key ID`
+TOOL: Bash `python -m specalign docedit append-row docs/specs/SPEC-F9-<slug>.md --section 13B --cell D-2 --cell 2026-11-02 --cell "Decision: tag slug as proposed (Q-2). Context: baseline tag naming. Consequences: tag <TAG_PREFIX>F9-<slug>-v1.0.0, created only after G1. User reply verbatim: Q-2: tag as proposed." --cell decision --cell Answered --key ID`
+TOOL: Bash `python -m specalign manifest add . note --json '{"text": "Socratic: Q-1 and Q-2 answered as D-1 and D-2. Q-3 Open, so the stage 8 gate is held."}'`
