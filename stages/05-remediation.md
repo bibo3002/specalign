@@ -2,7 +2,9 @@
 
 Rules: `gates/remediation.md`. Live DDL: `gates/ddl-protocol.md`.
 
-1. Work through the DFs marked **Fix**, one at a time: change → test → next. Stay inside the R1 file list.
+1. Work through the DFs marked **Fix**, one at a time: change → test → next. Stay inside the R1 file list. Record each
+   changed file with `manifest add file --json '{"path": "…", "scope": "remediation"}'`: the tool refuses a path the
+   R1 statement does not name (a file, or a directory above it).
 2. For each DDL migration: show **D1** (pre-check + result, rollback, verification query) and wait; then apply in one
    transaction and verify.
 3. After the last Fix: run the full test suite and the typecheck/build. Record the commands and counts. Red → stop.

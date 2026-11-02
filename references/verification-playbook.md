@@ -94,6 +94,11 @@ Dated results recorded in `<SPEC_DIR>/studies/green-<feature>.md`.
 Coverage rule: an item is GREEN only with a dated evidence entry; items not exercised are marked
 "not exercised" — never assumed passed.
 
+**Executable form.** `evals/scenarios.json` holds all 29 rows. `python -m specalign eval` (skill repository) runs the
+unit tests behind every mechanical guard and grades recorded agent transcripts (`--transcripts DIR`, file `<id>.txt`)
+against regex rules. A row is GREEN when its tests pass and, for behavioural rows, a transcript passes its rules; a
+behavioural row without a transcript is reported `not exercised`. How to record a transcript: `evals/README.md`.
+
 ## 6. Commit Hygiene
 Before every commit: verify `git status --porcelain` shows exactly the intended files, then after
 staging verify `git diff --cached --stat` count matches. Filesystem mounts may be case-insensitive

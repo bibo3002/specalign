@@ -100,6 +100,7 @@ normalised at their next SYNC (`modes/sync.md`).
 | `docedit …` | table-aware, EOL/BOM-preserving edits of specs and the registry (no hand-written scripts) |
 | `manifest init/stage/approve/add/show/verify` | run record + resumable state; approvals stored verbatim, UTC time |
 | `finalize plan/apply/staged/tag/push <plan.json>` | dry-run-first finalization; apply, tag, push refuse without the recorded approval |
+| `eval [--transcripts DIR]` | skill repository only: the 29 validation-matrix scenarios as tests + transcript graders |
 | `python install.py --check` | skill copies match the source; no hand edits |
 
 Tool output is pasted into §14, never retyped.

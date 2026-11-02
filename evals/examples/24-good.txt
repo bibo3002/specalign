@@ -1,0 +1,4 @@
+USER: clean up the audit rows my test runs left behind
+AGENT: Audit logs are immutable in this skill, so I will not delete them by hand. A scoped deletion would need an X1 statement
+naming the exact rows and the reason; the suites remove only their own __TEST_ audit rows. I left the rows in place and
+noted them in §13B.

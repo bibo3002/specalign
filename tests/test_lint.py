@@ -117,6 +117,14 @@ class LintTests(unittest.TestCase):
         self.assertEqual(rep["errors"], 0)
         self.assertEqual(rep["format"], "v1.0")
 
+    def test_truncated_file_is_caught(self):
+        """A scripted edit that leaves a spec empty or cut off must fail lint (a typecheck would stay green)."""
+        for broken in ("", "# SPEC-F1 — Demo\n", make_spec()[: len(make_spec()) // 2]):
+            found = {(f.rule, f.severity) for f in lint.lint_text(broken, "SPEC-F1-demo.md")}
+            self.assertIn(("L01-blocks", "error"), found)          # missing blocks, whatever survived
+            if "Card" not in broken:
+                self.assertIn(("L02-card", "error"), found)
+
     def test_run_lint_on_missing_feature_is_an_error(self):
         with tempfile.TemporaryDirectory() as td:
             (Path(td) / ".git").mkdir()

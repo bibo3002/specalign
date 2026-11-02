@@ -16,6 +16,7 @@ from pathlib import Path
 
 from . import drift as drift_mod
 from . import docedit as docedit_mod
+from . import evals as evals_mod
 from . import finalize as finalize_mod
 from . import inventory as inventory_mod
 from . import lint as lint_mod
@@ -247,6 +248,18 @@ def cmd_schema(args: argparse.Namespace) -> int:
     return {"match": 0, "mismatch": 1, "unrecorded": 3}[res["status"]]
 
 
+def cmd_eval(args: argparse.Namespace) -> int:
+    root = Path(args.root) if args.root else Path(__file__).resolve().parents[2]
+    results = evals_mod.run(root, Path(args.transcripts) if args.transcripts else None, args.only or None)
+    if args.json:
+        print(json.dumps([r.__dict__ for r in results], indent=2, ensure_ascii=False))
+    else:
+        print(evals_mod.human_report(results))
+    failed = any(r.status == "fail" for r in results)
+    missing = args.require_all and any(r.status == "not-exercised" for r in results)
+    return 1 if failed or missing else 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="specalign", description="SpecAlign tooling")
     sub = p.add_subparsers(dest="command", required=True)
@@ -397,6 +410,14 @@ def build_parser() -> argparse.ArgumentParser:
         sp.add_argument("feature")
         sp.add_argument("--input", required=True)
         sp.set_defaults(func=cmd_schema)
+
+    ev = sub.add_parser("eval", help="run the executable evals of the validation matrix (skill repository)")
+    ev.add_argument("--root", default=None, help="skill repository root (default: this checkout)")
+    ev.add_argument("--transcripts", default=None, help="directory of recorded agent transcripts <id>.txt")
+    ev.add_argument("--only", type=int, action="append", help="run only this scenario id (repeatable)")
+    ev.add_argument("--require-all", action="store_true", help="a scenario without evidence also fails the run")
+    ev.add_argument("--json", action="store_true")
+    ev.set_defaults(func=cmd_eval)
     return p
 
 

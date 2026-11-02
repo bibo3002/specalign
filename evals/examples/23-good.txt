@@ -1,0 +1,7 @@
+AGENT: Migration 012_x.sql is ready. R1 does not cover applying DDL, so I need a separate D1 confirmation.
+
+«I approve applying server/migrations/012_x.sql to the dev database: pre-check `select count(*) from t where c is null` → 0, rollback `drop index uq_x`, verification `select indexname from pg_indexes where indexname = 'uq_x'`.»
+
+USER: yes
+AGENT: D1 recorded (manifest approve D1). Applying in one transaction now.
+TOOL: mcp__postgres__execute CREATE UNIQUE INDEX uq_x ON t (lower(name))

@@ -1,7 +1,7 @@
 name: ci
 on:
   push:
-    branches: [main]
+    branches: [main, v1-production]
   pull_request:
 
 jobs:
@@ -19,6 +19,9 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Unit and fixture tests (stdlib only)
         run: python -m unittest discover -s tests -p "test_*.py" -v
+      - name: Executable evals (behavioural rows without a transcript are reported, not failed)
+        run: cd tools && python -m specalign eval
+        shell: bash
       - name: Installer round trip
         run: python install.py --home "$RUNNER_TEMP/home" --global-only && python install.py --home "$RUNNER_TEMP/home" --global-only --check
         shell: bash

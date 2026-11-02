@@ -130,6 +130,16 @@ def has_approval(data: dict, gates: set[str], containing: list[str] | None = Non
     return False
 
 
+def in_r1_scope(data: dict, path: str) -> bool:
+    """True when an R1 statement names the file, or a directory (`dir/`) above it."""
+    path = path.replace("\\", "/")
+    parents = [path.rsplit("/", i)[0] + "/" for i in range(1, path.count("/") + 1)]
+    for a in data["approvals"]:
+        if a["gate"] == "R1" and (path in a["statement"] or any(p in a["statement"] for p in parents)):
+            return True
+    return False
+
+
 def required_for(data: dict, stage: int) -> list[str]:
     """Gate requirements that must be recorded before entering `stage`."""
     need: list[str] = []
@@ -176,6 +186,9 @@ def add(repo: Path, kind: str, payload: dict, run: str | None = None) -> dict:
         p = repo_p / payload.get("path", "")
         if not p.is_file():
             raise SpecAlignError(f"file not found: {payload.get('path')}")
+        if payload.get("scope") == "remediation" and not in_r1_scope(data, payload["path"]):
+            raise SpecAlignError(f"{payload['path']} is not in the R1 file list; a remediating run may change only the "
+                                 "files it listed — ask for an R1 amendment first")
         payload["sha256"] = sha256_of(p)
         data["files"] = [f for f in data["files"] if f["path"] != payload["path"]] + [payload]
     elif kind == "migration":

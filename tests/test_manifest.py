@@ -106,6 +106,21 @@ class ManifestTests(unittest.TestCase):
         with self.assertRaises(SpecAlignError):
             manifest.add(self.p, "file", {"path": "nope.md"})
 
+    def test_remediation_files_must_be_in_the_r1_list(self):
+        for rel in ("server/a.ts", "server/routes/b.ts", "other/c.ts"):
+            (self.p / rel).parent.mkdir(parents=True, exist_ok=True)
+            (self.p / rel).write_text("x\n", encoding="utf-8")
+        with self.assertRaises(SpecAlignError) as cm:
+            manifest.add(self.p, "file", {"path": "server/a.ts", "scope": "remediation"})
+        self.assertIn("R1", str(cm.exception))
+        manifest.approve(self.p, "R1", "I authorize a remediating run for F1: dispositions as in the table above, "
+                         "changes limited to server/a.ts and server/routes/.", "fix all")
+        manifest.add(self.p, "file", {"path": "server/a.ts", "scope": "remediation"})
+        manifest.add(self.p, "file", {"path": "server/routes/b.ts", "scope": "remediation"})      # directory entry
+        with self.assertRaises(SpecAlignError):
+            manifest.add(self.p, "file", {"path": "other/c.ts", "scope": "remediation"})
+        manifest.add(self.p, "file", {"path": "other/c.ts"})                                      # not a remediation file
+
     def test_hash_ignores_crlf(self):
         f = self.p / "a.txt"
         f.write_bytes(b"x\r\ny\r\n")
