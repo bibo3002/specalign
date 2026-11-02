@@ -78,10 +78,15 @@ def read_manifest(target: Path) -> dict | None:
 
 
 def file_hash(path: Path) -> str | None:
+    """Hash of the file as it would be installed: text files compare modulo CRLF, because a Windows checkout with
+    core.autocrlf=true turns every LF file into CRLF and that is not a hand edit."""
     try:
-        return sha256(path.read_bytes())
+        data = path.read_bytes()
     except OSError:
         return None
+    if path.suffix.lower() in TEXT_SUFFIXES:
+        data = data.replace(b"\r\n", b"\n")
+    return sha256(data)
 
 
 def check(target: Path, root: Path) -> dict:
@@ -126,7 +131,7 @@ def install(target: Path, root: Path, force: bool = False, dry_run: bool = False
     written, removed = [], []
     for rel, data in files.items():
         dest = target / rel
-        if dest.exists() and sha256(dest.read_bytes()) == sha256(data):
+        if dest.exists() and file_hash(dest) == sha256(data):
             continue
         written.append(rel)
         if not dry_run:

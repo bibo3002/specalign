@@ -42,6 +42,18 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(chk["version"], "1.2.3")
         self.assertEqual((self.target / "stages" / "00.md").read_text(encoding="utf-8"), "stage 0 — صفر\n")
 
+    def test_crlf_checkout_is_not_a_hand_edit(self):
+        installer.install(self.target, self.src)
+        for p in self.target.rglob("*"):
+            if p.is_file() and p.name != installer.MANIFEST:
+                p.write_bytes(p.read_bytes().replace(b"\n", b"\r\n"))        # what autocrlf=true does on checkout
+        chk = installer.check(self.target, self.src)
+        self.assertTrue(chk["ok"], chk)
+        self.assertEqual(chk["hand_edited"], [])
+        self.assertEqual(installer.install(self.target, self.src)["refused"], False)
+        (self.target / "stages" / "00.md").write_bytes("changed\r\n".encode())          # a real edit is still caught
+        self.assertEqual(installer.check(self.target, self.src)["hand_edited"], ["stages/00.md"])
+
     def test_known_legacy_files_are_pruned(self):
         (self.target / "scripts").mkdir(parents=True)
         (self.target / "scripts" / "test_drift_probe.py").write_text("old\n")
