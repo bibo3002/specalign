@@ -1,0 +1,32 @@
+# Recorded 2026-11-02. Subagent playing the agent with the installed skill, simulated actions (no real tool use); scenario row 27.
+Drift shows F6 and F2 also list FieldWrapper.vue in Sources, and their release tags predate this change. That makes them ripple specs, so I patch them in this same run. I do not leave them stale or touch them without approval. First I re-check only the claims FieldWrapper.vue backs in each of them.
+
+TOOL: python -m specalign drift D:\sanad4 F10 F6 F2
+TOOL: Grep "FieldWrapper|aria-invalid|aria-describedby|labelId" in D:\sanad4\docs\specs\SPEC-F6*.md and SPEC-F2*.md (to list the claims and ACs that rely on the component)
+TOOL: git diff <F6 tag>..HEAD -- src/components/form/FieldWrapper.vue (to check whether F6/F2 claims about slot props, ARIA wiring or error rendering still hold)
+TOOL: python -m specalign manifest stage D:\sanad4 12 (record that finalization is being planned)
+
+Plan, before I ask for any approval:
+
+1. F10: the SYNC version bump follows gates/versioning.md. If the change is behaviour added without breaking a client, it is MINOR. If a documented contract breaks, it is MAJOR and needs V1, which I decide before writing anything.
+2. F6 and F2 (ripple patches):
+   - Each gets a PATCH bump and a §13C row: "Patched (ripple), caused by F10 vX.Y.Z", with the superseded wording quoted (Rule 9).
+   - Each gets a §13D row pointing at this run's approval.
+   - Each gets its own tag and an updated INDEX row.
+   - Last verified moves to today only for the claims I actually re-checked.
+   - If the re-check shows an F6 or F2 claim is behaviourally affected, I stop treating it as a ripple. I tell you, and that spec needs a real SYNC.
+3. One finalization plan (plan.json, kept in the scratchpad, outside the repo). It lists:
+   - the three specs and docs/specs/INDEX.md in expect_files;
+   - three tags;
+   - a refresh of the registry pilot note.
+4. Checks: a dry run (finalize plan) and then lint on the three specs. After apply, registry check must pass 9/9, with the tag checks pending until the tags exist.
+
+Nothing is written yet. When the dry-run diff is ready I will send you a message with the filled W1. It will list these files for F10 v<X.Y.Z>, F6 v<patch> and F2 v<patch>, with the staged-file count and the finalization commit:
+- the three specs
+- docs/specs/INDEX.md
+
+The same message will include the filled G1 for the three tags, because G1 must list the ripple tags too. I will not ask for P1 yet. A push needs its own explicit approval, and I will ask for it after the tags exist.
+
+Do you want W1 and G1 as separate statements, or the combined C1? C1 would need P1 shown in the same message.
+
+TOOL: python -m specalign manifest approve D:\sanad4 W1 --statement-file <file> --reply-file <file> (only after your reply approves the message unchanged)

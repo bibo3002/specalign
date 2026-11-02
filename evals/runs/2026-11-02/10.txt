@@ -1,0 +1,23 @@
+# Recorded 2026-11-02. Subagent playing the agent with the installed skill, simulated actions (no real tool use); scenario row 10. (Re-run: the first attempt ended with an API safeguard error and produced no transcript.)
+Abort acknowledged. I'm stopping F9 documentation (GENESIS) now.
+
+**Where the run stopped**
+- I was in stage 3 (Read), about half through the F9 files. The binding gate, tier and scope, and inventory stages were already done.
+- I have not reached the checkpoint, verification, drafting or the write gate.
+
+**What exists**
+- No spec, registry row, tag, project-map patch, test data or database change exists. Nothing was written to the repository or the database, so there is nothing to revert.
+- I have not written `.specalign/run-state.json` or any other file. Aborting means no further writes.
+
+**Partial work (this stays in the conversation only)**
+- The reading covered about half of the F9 code files.
+- No behaviour claims were recorded and no runtime verification was done.
+- No open questions were raised for the user.
+
+**Why there is no §13B entry yet**
+- The skill says to log partial work in §13B, but no draft spec exists. Creating one would be a write after an abort.
+
+**Options**
+- To resume later, say "resume F9". I will re-read SKILL.md, the stage 3 file and the F9 inventory, then continue from the unread files.
+- If you want the partial-work note recorded, tell me and I will write it as a Draft spec stub under `docs/specs/`. That is the only place allowed before the write gate.
+- To switch modes, name the mode.

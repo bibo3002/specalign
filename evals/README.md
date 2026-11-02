@@ -34,3 +34,25 @@ rule fails on a correct transcript, fix the rule and say why in the commit.
 
 `examples/<id>-good.txt` and `<id>-bad.txt` exist for rows 23, 24 and 26. They are **not** evidence about any model;
 `tests/test_evals.py` uses them to prove that the graders accept the right behaviour and reject the wrong one.
+
+## Recorded runs
+
+`runs/2026-11-02/` holds the first recorded set: one transcript for each of the 17 behavioural rows. **What this is and
+is not.** Each transcript is a fresh subagent (the same model family the skill runs on) given the installed skill and a
+neutral one-paragraph scenario that does not hint at the expected behaviour. The subagent could only read the skill
+directory and had to write its messages and every tool call it *would* make (`TOOL:` lines). So the evidence is
+`simulated actions`, one sample per row, single turn: it shows that the skill's text leads the agent to the right
+behaviour, not that a long live session never slips. Three rows (4, 10, 15) hit an API safeguard error on the first
+attempt and were re-run with reworded scenarios.
+
+**First-pass grading was 19 of 26 graded rows passing; all seven failures were defects of the rules, not of the agent**
+(narrow phrases such as requiring the literal gate id `X1`, a `git checkout --` that makes no sense when only a tag is
+wrong, and forbidden-command patterns that also matched an explanation of the command). The rules were revised after
+seeing the transcripts, which is a weakness: each revised scenario carries a `rule_revision` note, and
+`tests/test_evals.py` requires a bad-behaviour example that every revised rule still rejects. A later recording should
+be graded by rules fixed beforehand.
+
+**What the transcripts changed in the skill.** Three of fourteen agents invented CLI flags that do not exist
+(`docedit set-row`, `--note`, a wrong argument order): `references/cli.md` now lists every command with exact examples
+and a test parses each one with the real parser. The row-4 agent asked for a "remediating run" authorization when it had
+found nothing to remediate: stage 4 now says a documentation-only run asks for no R1.

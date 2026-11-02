@@ -89,6 +89,8 @@ normalised at their next SYNC (`modes/sync.md`).
 
 ## Tools (`python -m specalign …`, from the skill's `tools/` dir; stdlib-only)
 
+Exact syntax of every command, with examples: `references/cli.md`. Do not guess flags.
+
 | Command | Purpose |
 |---|---|
 | `preflight <repo>` | stage 0: binding complete, tracked files clean, tag namespace, encodings; exit 0/1/2 |

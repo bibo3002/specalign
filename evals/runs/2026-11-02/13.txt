@@ -1,0 +1,23 @@
+# Recorded 2026-11-02. Subagent playing the agent with the installed skill, simulated actions (no real tool use); scenario row 13.
+SYNC F2, stage 6b (behavioural verification), simulated transcript.
+
+Situation: the real browser click on "Save" produced no network request and no UI change within 2 s. The unit test for the save handler passes, but it never touches the real button, so it can't show that a user's click reaches the handler.
+
+Protocol applied (stages/06-verification.md 6b, verification-playbook.md section 2, evidence.md):
+1. Retry the click once. Check network requests and console messages.
+2. If it still does nothing, make a scripted .click() through browser_evaluate and check for the request.
+3. If the request fires, label the evidence `runtime-js-click` (not `runtime`) and add an anomaly row to section 13B ("trusted click on Save is a no-op while the handler works"), with timestamps, the retry result and the console output. This proves the handler works, not that a natural click lands.
+4. If the scripted click also fails, mark the claim `code-verified-only` with the reason.
+
+Rules kept:
+- No code edited and nothing fixed on the spot. The run is read-only until the write gate, and any fix needs an approved remediating-run authorization (R1).
+- I'll flag the no-op to the user as a possible product defect and ask whether to open an R1 remediation.
+- The time spent counts against the 10-minute behavioural budget.
+- Cleanup (6c) deletes only `__TEST_` rows, and a count query checks it afterwards.
+
+Tool calls in order (simulated, not run):
+- mcp__playwright__browser_click (retry on the same Save button)
+- mcp__playwright__browser_network_requests
+- mcp__playwright__browser_console_messages
+- mcp__playwright__browser_evaluate (scripted click on the Save button, returning found / disabled / aria-disabled / type)
+- mcp__playwright__browser_network_requests (confirm the request fires)

@@ -1,0 +1,2 @@
+AGENT: Section 3 is right, so I rewrote sections 6 and 8 to match without opening the code.
+TOOL: python -m specalign docedit docs/specs/SPEC-F12-x.md replace-block --section 6 --body-file b.md

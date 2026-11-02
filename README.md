@@ -94,8 +94,8 @@ All project values live in `<SPEC_DIR>/binding.md` (template: `templates/binding
 Every stage transition is gated; evidence rules are tier-invariant. The mechanical checks (registry, drift, lint,
 inventory, schema) are tool-run and pasted, never retyped. The test suite covers the tools, the gates' refusals and the
 skill's own documents; CI runs them on Linux and Windows, Python 3.10 and 3.12. `python -m specalign eval` runs the 29
-validation-matrix rows: 12 are proven by tests, **17 behavioural rows are not exercised** until an agent transcript is
-recorded and graded (`evals/README.md`). The tools have run against fixture repositories, two dry-run adoptions
+validation-matrix rows: 12 are proven by tests and 17 behavioural rows are graded on recorded subagent transcripts
+(`evals/runs/`; simulated actions, one sample per row, rules revised after the first pass — see `evals/README.md`). The tools have run against fixture repositories, two dry-run adoptions
 (a Python service, a library) and one real project (Sanad, with its live database); a second real project is still
 missing. Release status: `RELEASING.md`.
 

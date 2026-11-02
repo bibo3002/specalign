@@ -85,6 +85,26 @@ class SkillDocTests(unittest.TestCase):
                 if expect:
                     self.assertIn(layout.rsplit("/", 0)[0].lower(), env_file.read_text().lower())
 
+    def test_every_cli_example_in_the_reference_parses(self):
+        """Agents invent flags that do not exist (found by the behavioural evals): the reference must be exact."""
+        import shlex
+        from specalign.cli import build_parser
+        text = (ROOT / "references" / "cli.md").read_text(encoding="utf-8")
+        parser = build_parser()
+        examples = [ln for block in re.findall(r"```\n(.*?)```", text, re.S) for ln in block.split("\n")
+                    if ln.startswith("python -m specalign")]
+        self.assertGreaterEqual(len(examples), 40)
+        for line in examples:
+            argv = shlex.split(line)[3:]
+            try:
+                parser.parse_args(argv)
+            except SystemExit as exc:
+                if exc.code not in (0, None):          # --version exits 0 by design
+                    self.fail(f"does not parse (exit {exc.code}): {line}")
+
+    def test_router_points_to_the_cli_reference(self):
+        self.assertIn("references/cli.md", (ROOT / "SKILL.md").read_text(encoding="utf-8"))
+
     def test_one_version_everywhere(self):
         from specalign import __version__
         version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()

@@ -9,7 +9,7 @@ otherwise): `VERSION`, `tools/specalign/__init__.py`, the title of `SKILL.md`, a
 | Criterion | Status |
 |---|---|
 | All tool-level evals green on Linux and Windows, Python 3.10 and 3.12 | **met** — CI matrix, `python -m specalign eval` |
-| Behavioural evals (17 matrix rows) graded on recorded transcripts | **not met** — graders and the recording procedure exist (`evals/README.md`); no transcripts recorded yet. Rows 3–7, 9–11, 13–15, 21–24, 26, 27 are "not exercised" |
+| Behavioural evals (17 matrix rows) graded on recorded transcripts | **met with caveats** — `evals/runs/2026-11-02/` (simulated actions by subagents, one sample per row, rules revised after the first pass; see `evals/README.md`). CI enforces `--require-all` on those transcripts. A re-recording with rules fixed beforehand, or with live tool use, would be stronger |
 | Linter clean on the reference corpus (Sanad, 14 specs) | **met with a baseline** — 0 new errors; 6 known SPEC-F4 findings baselined (`docs/specs/lint-baseline.json`), 84 legacy traceability warnings |
 | Three dry-run adoptions | **met** — Sanad (real: Postgres, Vue/Fastify, migrated and CI-green), a Python service with decorator routes and SQLite, a no-DB no-UI library (`tests/test_adoption.py`) |
 | Golden finalization replay | **met** — F6's real finalization edits replayed with `finalize` give byte-identical spec and registry, and a second apply changes nothing |

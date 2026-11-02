@@ -28,6 +28,14 @@ adoptions, golden replay met; recorded transcripts for the 17 behavioural rows a
   Golden replay: F6's real finalization edits replayed through `finalize` on its real spec and CRLF registry are
   byte-identical, and a second apply changes nothing.
 
+### Added — behavioural evals recorded (2026-11-02)
+- 17 transcripts from fresh subagents following the installed skill on neutral scenarios (`evals/runs/2026-11-02/`),
+  graded by `eval --transcripts … --require-all`, which CI now runs. All 29 matrix rows grade green. Limits: simulated
+  actions, one sample per row, rules were revised after the first pass (documented per scenario).
+- Skill changes the transcripts caused: `references/cli.md` (exact syntax of every command; a test parses each example
+  with the real parser, which also caught a wrong `lint --file` example) and stage 4 (a run with no DF marked Fix is
+  documentation-only and asks for no R1).
+
 ### Fixed — found in the field
 - Sanad's registry workflow had **failed on every push** since it was added: it called `.opencode/skills/...` while git
   tracks `.opencode/Skills/...` and Linux runners are case-sensitive. The adopter workflow now locates the skill

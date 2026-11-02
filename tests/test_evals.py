@@ -51,15 +51,30 @@ class GraderTests(unittest.TestCase):
         self.by_id = {s["id"]: s for s in evals.load_scenarios(ROOT)}
 
     def test_good_examples_pass_and_bad_examples_fail(self):
-        examples = sorted(EXAMPLES.glob("*-good.txt"))
-        self.assertGreaterEqual(len(examples), 3)
-        for good in examples:
+        goods = sorted(EXAMPLES.glob("*-good.txt"))
+        self.assertGreaterEqual(len(goods), 3)
+        for good in goods:
             sid = int(good.name.split("-")[0])
             ok, problems = evals.grade(self.by_id[sid], good.read_text(encoding="utf-8"))
             self.assertTrue(ok, f"{good.name}: {problems}")
-            bad = good.with_name(good.name.replace("-good", "-bad"))
-            ok, problems = evals.grade(self.by_id[sid], bad.read_text(encoding="utf-8"))
+        bads = sorted(EXAMPLES.glob("*-bad.txt"))
+        self.assertGreaterEqual(len(bads), 9)
+        for bad in bads:
+            ok, _ = evals.grade(self.by_id[int(bad.name.split("-")[0])], bad.read_text(encoding="utf-8"))
             self.assertFalse(ok, f"{bad.name} should fail the grader")
+
+    def test_every_revised_rule_still_rejects_wrong_behaviour(self):
+        revised = {s["id"] for s in self.by_id.values() if "rule_revision" in s}
+        rejected = {int(p.name.split("-")[0]) for p in EXAMPLES.glob("*-bad.txt")}
+        self.assertEqual(revised - rejected, set(), "each revised rule needs a bad example that it rejects")
+
+    def test_recorded_runs_pass_their_rules(self):
+        run = ROOT / "evals" / "runs" / "2026-11-02"
+        files = sorted(run.glob("*.txt"))
+        self.assertEqual(len(files), 17)
+        for f in files:
+            ok, problems = evals.grade(self.by_id[int(f.stem)], f.read_text(encoding="utf-8"))
+            self.assertTrue(ok, f"{f.name}: {problems}")
 
     def test_order_rule(self):
         sc = {"must": [], "must_not": [], "order": [["APPROVED", "DROP TABLE"]]}

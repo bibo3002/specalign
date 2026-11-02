@@ -14,7 +14,10 @@ Numbered DFs with severity, claim + citation, **recommended disposition**, files
 DDL needed — the table format is in `gates/dispositions.md`.
 
 ⚠️ **Gate R1:** the user edits the table or accepts the recommendations. The reply, quoted verbatim, authorizes a
-**remediating run** limited to the listed files (`gates/remediation.md`). If no DF is marked Fix, the run is
-**documentation-only** and stage 5 is skipped.
+**remediating run** limited to the listed files (`gates/remediation.md`).
+
+**No DF marked Fix → nothing to authorize.** The run is **documentation-only**: do not ask for R1 (it would authorize
+nothing), show the table and the E5 result, and continue once the user acknowledges it (record the reply as a
+`manifest add . note`). Stage 5 is skipped; the manifest's run type stays `documentation-only`.
 
 Record in the run state: run type, dispositions, files in scope, whether DDL is pending.
