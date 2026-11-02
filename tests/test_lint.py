@@ -125,6 +125,38 @@ class LintTests(unittest.TestCase):
             if "Card" not in broken:
                 self.assertIn(("L02-card", "error"), found)
 
+    def test_baseline_suppresses_known_errors_only(self):
+        with tempfile.TemporaryDirectory() as td:
+            spec = Path(td) / "SPEC-F1-demo.md"
+            spec.write_text(make_spec(df_status="Open"), encoding="utf-8")
+            first = lint.run_lint(td, files=[spec])
+            self.assertGreater(first["summary"]["errors"], 0)
+            baseline = {lint.finding_key(r["file"], f) for r in first["reports"] for f in r["findings"] if f["severity"] == "error"}
+            again = lint.run_lint(td, files=[spec], baseline=baseline)
+            self.assertEqual((again["summary"]["errors"], again["summary"]["baselined"]), (0, len(baseline)))
+            # moving the finding to another line does not resurrect it
+            spec.write_text("\n\n" + make_spec(df_status="Open"), encoding="utf-8")
+            self.assertEqual(lint.run_lint(td, files=[spec], baseline=baseline)["summary"]["errors"], 0)
+            # a new error is not covered
+            spec.write_text(make_spec(df_status="Open", overall="**Overall: FAIL**"), encoding="utf-8")
+            self.assertEqual(lint.run_lint(td, files=[spec], baseline=baseline)["summary"]["errors"], 1)
+            # a fixed finding leaves a stale entry
+            spec.write_text(make_spec(), encoding="utf-8")
+            stale = lint.run_lint(td, files=[spec], baseline=baseline)["stale_baseline"]
+            self.assertEqual(len(stale), len(baseline))
+
+    def test_baseline_file_round_trip_and_validation(self):
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td) / "bl.json"
+            p.write_text('{"schema": "wrong"}', encoding="utf-8")
+            with self.assertRaises(SpecAlignError):
+                lint.load_baseline(p)
+            payload = lint.baseline_payload({"reports": [{"file": "SPEC-F1-x.md", "findings": [
+                {"severity": "error", "rule": "L04-df-state", "message": "DF-1 is still Open"},
+                {"severity": "warn", "rule": "L05-df-ac", "message": "x"}]}]})
+            p.write_text(__import__("json").dumps(payload), encoding="utf-8")
+            self.assertEqual(lint.load_baseline(p), {"SPEC-F1-x.md|L04-df-state|DF-1 is still Open"})
+
     def test_run_lint_on_missing_feature_is_an_error(self):
         with tempfile.TemporaryDirectory() as td:
             (Path(td) / ".git").mkdir()

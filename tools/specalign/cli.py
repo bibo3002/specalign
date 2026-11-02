@@ -70,8 +70,16 @@ def cmd_drift(args: argparse.Namespace) -> int:
 
 
 def cmd_lint(args: argparse.Namespace) -> int:
+    baseline = lint_mod.load_baseline(Path(args.baseline)) if args.baseline else None
     payload = lint_mod.run_lint(args.repo, args.spec_dir, args.tag_prefix, args.features or None,
-                                [Path(f) for f in args.file] or None)
+                                [Path(f) for f in args.file] or None, baseline)
+    if args.write_baseline:
+        Path(args.write_baseline).write_text(
+            json.dumps(lint_mod.baseline_payload(payload, "Known findings accepted when the linter was adopted; "
+                                                          "fix them at the spec's next SYNC and delete the entries."),
+                       indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+        print(f"wrote baseline {args.write_baseline}")
+        return 0
     if args.json:
         print(json.dumps(payload, indent=2, ensure_ascii=False))
     else:
@@ -289,6 +297,8 @@ def build_parser() -> argparse.ArgumentParser:
     common(li)
     li.add_argument("features", nargs="*", help="optional F-ids (default: every spec)")
     li.add_argument("--file", action="append", default=[], help="lint this spec file directly (repeatable)")
+    li.add_argument("--baseline", default=None, help="JSON of accepted known errors; only new errors fail the run")
+    li.add_argument("--write-baseline", default=None, help="write the current errors as a baseline file and exit 0")
     li.add_argument("--no-warnings", action="store_true", help="hide warnings in the human report")
     li.add_argument("--strict", action="store_true", help="warnings also fail the run")
     li.set_defaults(func=cmd_lint)

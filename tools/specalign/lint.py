@@ -9,6 +9,7 @@ Rules that protect a *released* spec (Approved) are errors in both formats.
 """
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -20,6 +21,7 @@ from .common import (
 from .drift import parse_sources
 
 SCHEMA = "specalign.lint/1"
+BASELINE_SCHEMA = "specalign.lint-baseline/1"
 
 BLOCKS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13A", "13B", "13C", "13D", "14"]
 STATUSES = {"Draft", "Verifying", "Approved", "Stale"}
@@ -335,7 +337,8 @@ def lint_file(path: Path, tag_prefix: str = "spec/") -> dict:
 
 
 def run_lint(repo: Path, spec_dir: str = "docs/specs", tag_prefix: str | None = None,
-             features: list[str] | None = None, files: list[Path] | None = None) -> dict:
+             features: list[str] | None = None, files: list[Path] | None = None,
+             baseline: set[str] | None = None) -> dict:
     from .common import require_repo
     from .registry import resolve_tag_prefix
     if files:
@@ -351,15 +354,52 @@ def run_lint(repo: Path, spec_dir: str = "docs/specs", tag_prefix: str | None = 
             raise SpecAlignError(f"no spec file for {', '.join(missing)}")
         targets = [p for f in wanted for p in by_id[f]]
     reports = [lint_file(p, prefix) for p in targets]
+    all_keys = {finding_key(r["file"], f) for r in reports for f in r["findings"] if f["severity"] == "error"}
+    baselined = 0
+    if baseline is not None:
+        for r in reports:
+            for f in r["findings"]:
+                if f["severity"] == "error" and finding_key(r["file"], f) in baseline:
+                    f["severity"] = "baselined"
+                    baselined += 1
+            r["errors"] = sum(f["severity"] == "error" for f in r["findings"])
+    stale = sorted(k for k in (baseline or set()) if k not in all_keys and (not features or _key_in(k, targets)))
     return {
         "schema": SCHEMA,
         "summary": {
             "specs": len(reports),
             "errors": sum(r["errors"] for r in reports),
             "warnings": sum(r["warnings"] for r in reports),
+            "baselined": baselined,
         },
+        "stale_baseline": stale,
         "reports": reports,
     }
+
+
+def finding_key(file: str, finding: dict) -> str:
+    """Line-independent identity of a finding, so a baseline survives edits elsewhere in the spec."""
+    return f"{Path(file).name}|{finding['rule']}|{finding['message']}"
+
+
+def _key_in(key: str, targets: list[Path]) -> bool:
+    return any(key.startswith(Path(t).name + "|") for t in targets)
+
+
+def load_baseline(path: Path) -> set[str]:
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SpecAlignError(f"cannot read lint baseline {path}: {exc}") from exc
+    if data.get("schema") != BASELINE_SCHEMA or not isinstance(data.get("accepted"), list):
+        raise SpecAlignError(f"{path}: not a {BASELINE_SCHEMA} file")
+    return {str(k) for k in data["accepted"]}
+
+
+def baseline_payload(payload: dict, note: str = "") -> dict:
+    keys = sorted({finding_key(r["file"], f) for r in payload["reports"] for f in r["findings"]
+                   if f["severity"] in {"error", "baselined"}})
+    return {"schema": BASELINE_SCHEMA, "note": note, "accepted": keys}
 
 
 def human_report(payload: dict, show_warnings: bool = True) -> str:
@@ -370,7 +410,11 @@ def human_report(payload: dict, show_warnings: bool = True) -> str:
         for f in r["findings"]:
             if f["severity"] == "warn" and not show_warnings:
                 continue
-            lines.append(f"  {'ERROR' if f['severity'] == 'error' else 'warn '} L{f['line']:<4} {f['rule']}: {f['message']}")
+            mark = {"error": "ERROR", "warn": "warn ", "baselined": "known"}[f["severity"]]
+            lines.append(f"  {mark} L{f['line']:<4} {f['rule']}: {f['message']}")
     s = payload["summary"]
-    lines.append(f"\nSummary: {s['specs']} spec(s), {s['errors']} error(s), {s['warnings']} warning(s)")
+    for k in payload.get("stale_baseline", []):
+        lines.append(f"  stale baseline entry (fixed? remove it): {k}")
+    extra = f", {s['baselined']} baselined" if s.get("baselined") else ""
+    lines.append(f"\nSummary: {s['specs']} spec(s), {s['errors']} error(s), {s['warnings']} warning(s){extra}")
     return "\n".join(lines)
