@@ -66,6 +66,8 @@ def _apply_edits(repo: Path, plan: dict) -> dict[str, Doc]:
                 doc.patch_row(mc, mv, dict(e["set"]), e.get("section"), e.get("table", 0), e.get("with_column"))
             elif op == "set-card":
                 doc.set_card(e["field"], e["value"])
+            elif op == "insert-block":
+                doc.insert_block(e["code"], e["title"], list(e["body"]), e["after"])
             else:
                 raise SpecAlignError(f"unknown op {op!r}")
         except (KeyError, ValueError) as exc:

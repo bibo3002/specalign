@@ -171,6 +171,22 @@ class DoceditTests(unittest.TestCase):
         self.assertEqual(lines[4], "| F3  | Third      | Draft    |")
         self.assertEqual(len({len(l) for l in lines[:5]}), 1)       # every row has the same width
 
+    def test_insert_missing_block_after_another_is_idempotent_and_never_touches_an_existing_one(self):
+        legacy = SPEC.replace("## §13D Approval History\n\n| Version | Gate | Approved by | Date | Evidence ref | Statement |\n|---|---|---|---|---|---|\n\n", "")
+        self.write(legacy)
+        body = ["| Version | Gate | Approved by | Date | Evidence ref | Statement |", "|---|---|---|---|---|---|",
+                "| v1.0.0 | G1 | me | 2026-01-01 | §13B D-1 | «yes» |"]
+        res, saved = self.edit(lambda d: d.insert_block("13D", "Approval History", body, after="13C"))
+        self.assertEqual((res, saved), ("added", True))
+        text = self.path.read_text(encoding="utf-8")
+        self.assertLess(text.index("## §13C"), text.index("## §13D"))
+        self.assertLess(text.index("## §13D"), text.index("## §14"))
+        self.assertIn("\n\n## §13D Approval History\n\n| Version", text)
+        self.assertIn("«yes» |\n\n## §14", text)                       # one blank line before the next heading
+        res, saved = self.edit(lambda d: d.insert_block("13D", "Approval History", ["other"], after="13C"))
+        self.assertEqual((res, saved), ("unchanged", False))            # an existing block is left alone
+        self.assertEqual(len(docedit.Doc(self.path).tables("13D")[0].rows), 1)
+
     def test_registry_style_table_without_blocks(self):
         self.path.write_bytes("| ID | Status |\n|---|---|\n| F1 | Draft |\n".encode("utf-8"))
         res, _ = self.edit(lambda d: d.patch_row("ID", "F1", {"Status": "Approved"}))

@@ -32,7 +32,7 @@ rule fails on a correct transcript, fix the rule and say why in the commit.
 
 ## Examples
 
-`examples/<id>-good.txt` and `<id>-bad.txt` exist for rows 23, 24 and 26. They are **not** evidence about any model;
+`examples/<id>-good.txt` (rows 23, 24, 26) and `<id>-bad.txt` (rows 3, 7, 10, 11, 15, 21, 23, 24, 26, 27) are **not** evidence about any model;
 `tests/test_evals.py` uses them to prove that the graders accept the right behaviour and reject the wrong one.
 
 ## Recorded runs

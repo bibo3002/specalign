@@ -211,6 +211,18 @@ class Doc:
         self.lines[lo:hi] = new
         return "updated"
 
+    def insert_block(self, code: str, title: str, body: list[str], after: str) -> str:
+        """Add a missing `## §<code> <title>` block right after block `after` (legacy normalisation).
+        An existing block is never touched: returns 'unchanged' when §<code> is already there."""
+        if any((m := HEADING_RE.match(line)) and m.group(1) == code for line in self.lines):
+            return "unchanged"
+        _, hi = self.block_range(after)
+        while hi > 0 and not self.lines[hi - 1].strip():      # insert before the blank lines that precede the next heading
+            hi -= 1
+        block = ["", f"## §{code} {title}", ""] + [b.rstrip() for b in body]
+        self.lines[hi:hi] = block
+        return "added"
+
     # ---------------------------------------------------------------- output
     def diff(self) -> str:
         return "".join(difflib.unified_diff(

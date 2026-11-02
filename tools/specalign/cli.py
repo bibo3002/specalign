@@ -112,9 +112,12 @@ def cmd_docedit(args: argparse.Namespace) -> int:
         result = doc.patch_row(mcol, mval, _kv(args.set, "--set"), args.section, args.table, args.with_column)
     elif args.op == "set-card":
         result = doc.set_card(args.field, args.value)
-    else:  # replace-block
+    elif args.op == "replace-block":
         body = read_text(Path(args.body_file)).split("\n")
         result = doc.replace_block(args.section, body)
+    else:  # insert-block
+        body = read_text(Path(args.body_file)).split("\n")
+        result = doc.insert_block(args.code, args.title, body, args.after)
     if args.dry_run:
         print(doc.diff() or "(no change)")
     elif doc.save():
@@ -333,6 +336,12 @@ def build_parser() -> argparse.ArgumentParser:
     rb = de_sub.add_parser("replace-block", help="replace the body of a block")
     edit_common(rb)
     rb.add_argument("--body-file", required=True)
+    ib = de_sub.add_parser("insert-block", help="add a missing block after another (legacy normalisation)")
+    edit_common(ib, section=False)
+    ib.add_argument("--code", required=True, help="block code to add, e.g. 13D")
+    ib.add_argument("--title", required=True, help="heading text after the code, e.g. 'Approval History'")
+    ib.add_argument("--after", required=True, help="block code it follows, e.g. 13C")
+    ib.add_argument("--body-file", required=True)
 
     mf = sub.add_parser("manifest", help="run record and resumable run state")
     mf_sub = mf.add_subparsers(dest="op", required=True)

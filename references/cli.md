@@ -34,7 +34,10 @@ python -m specalign docedit patch-row docs/specs/SPEC-F6-basic-data.md --section
 python -m specalign docedit patch-row docs/specs/INDEX.md --match ID=F6 --set "Last verified=2026-11-02" --set Status=Approved
 python -m specalign docedit set-card docs/specs/SPEC-F6-basic-data.md --field Status --value Approved
 python -m specalign docedit replace-block docs/specs/SPEC-F6-basic-data.md --section 14 --body-file body.md --dry-run
+python -m specalign docedit insert-block docs/specs/SPEC-F4-files-list.md --code 13D --title "Approval History" --after 13C --body-file body.md
 ```
+`insert-block` adds a block that a legacy spec lacks (it never touches an existing one). In a finalize plan the same
+operation is `{"file": …, "op": "insert-block", "code": "13D", "title": "Approval History", "after": "13C", "body": [lines]}`.
 `--cells-file` is a JSON list of cell strings. `--key COLUMN` replaces an existing row with the same key instead of
 adding one. Every operation is idempotent; `--dry-run` prints the diff and writes nothing.
 

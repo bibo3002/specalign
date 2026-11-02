@@ -76,6 +76,27 @@ class GraderTests(unittest.TestCase):
             ok, problems = evals.grade(self.by_id[int(f.stem)], f.read_text(encoding="utf-8"))
             self.assertTrue(ok, f"{f.name}: {problems}")
 
+    def test_commands_in_the_after_fix_transcripts_parse_with_the_real_cli(self):
+        """The follow-up recording (after references/cli.md) must contain no invented flags."""
+        import shlex
+        from specalign.cli import build_parser
+        parser = build_parser()
+        checked = 0
+        for f in sorted((ROOT / "evals" / "runs" / "2026-11-02-after-fixes").glob("*.txt")):
+            for line in f.read_text(encoding="utf-8").splitlines():
+                if "python -m specalign " not in line:
+                    continue
+                inner = re.search(r"`([^`]*python -m specalign [^`]*)`", line)
+                cmd = inner.group(1) if inner else re.sub(r"\s{3,}\(.*$", "", line.split("TOOL:", 1)[-1])
+                cmd = cmd.split("python -m specalign ", 1)[1]
+                try:
+                    parser.parse_args(shlex.split(cmd))
+                except SystemExit as exc:
+                    if exc.code not in (0, None):
+                        self.fail(f"{f.name}: invalid command: {cmd[:120]}")
+                checked += 1
+        self.assertGreaterEqual(checked, 4)
+
     def test_order_rule(self):
         sc = {"must": [], "must_not": [], "order": [["APPROVED", "DROP TABLE"]]}
         self.assertTrue(evals.grade(sc, "APPROVED\nDROP TABLE x")[0])
