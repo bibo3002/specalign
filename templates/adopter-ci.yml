@@ -23,7 +23,8 @@ jobs:
           python-version: "3.12"
       - name: Locate the installed skill
         run: |
-          tools="$(find .opencode .claude -maxdepth 4 -type d -ipath '*/skills/specalign/tools' 2>/dev/null | head -1)"
+          # the runner shell is `bash -eo pipefail`: a missing search root must not abort the step
+          tools="$( (find .opencode .claude -maxdepth 4 -type d -ipath '*/skills/specalign/tools' 2>/dev/null || true) | head -1)"
           if [ -z "$tools" ]; then echo "::error::SpecAlign is not installed in this repository (run install.py --project .)"; exit 1; fi
           echo "SKILL_TOOLS=$tools" >> "$GITHUB_ENV"
         shell: bash

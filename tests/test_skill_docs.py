@@ -63,6 +63,28 @@ class SkillDocTests(unittest.TestCase):
             for m in re.finditer(r"python -m specalign (\w+)", f.read_text(encoding="utf-8")):
                 self.assertIn(m.group(1), known, f"{f.relative_to(ROOT)}: unknown command {m.group(1)!r}")
 
+    def test_adopter_ci_locate_step_survives_the_runner_shell(self):
+        """GitHub runs `bash -eo pipefail`; a missing `.claude` once aborted the locate step in a real project."""
+        import shutil
+        import subprocess
+        import tempfile
+        bash = shutil.which("bash")
+        if not bash:
+            self.skipTest("bash not available")
+        text = (ROOT / "templates" / "adopter-ci.yml").read_text(encoding="utf-8")
+        block = re.search(r"- name: Locate the installed skill\n\s+run: \|\n((?:\s{10}.*\n)+)", text).group(1)
+        script = "\n".join(line[10:] for line in block.split("\n"))
+        for layout, expect in ((".opencode/Skills/specalign/tools", True), (".claude/skills/specalign/tools", True),
+                               (".opencode/other", False)):
+            with tempfile.TemporaryDirectory() as td:
+                (Path(td) / layout).mkdir(parents=True)
+                env_file = Path(td) / "env.txt"
+                proc = subprocess.run([bash, "-eo", "pipefail", "-c", script], cwd=td, capture_output=True, text=True,
+                                      env={**__import__("os").environ, "GITHUB_ENV": str(env_file)})
+                self.assertEqual(proc.returncode == 0, expect, f"{layout}: {proc.stderr}")
+                if expect:
+                    self.assertIn(layout.rsplit("/", 0)[0].lower(), env_file.read_text().lower())
+
     def test_router_tools_table_lists_every_cli_command(self):
         from specalign.cli import build_parser
         known = set(build_parser()._subparsers._group_actions[0].choices)
