@@ -9,8 +9,10 @@ effects. Include the tests — they document intent and reveal gaps.
 ## 3b Data model (`DB_TOOL`, playbook §1)
 Tables, columns, types, defaults, constraints, partial indexes, triggers, enums — as observed in the live database.
 Also enumerate what the feature **consumes**: relevant triggers, materialized/aggregate views, DB functions
-(calculators, notify hooks). Record a schema fingerprint (a hash of the introspection result) in §0 when the adapter
-supports it.
+(calculators, notify hooks). Record a schema fingerprint in §0: run the adapter's introspection query
+(`adapters/<db>/introspection.sql`) for the feature's tables, save the rows as JSON, and
+`python -m specalign schema fingerprint --input rows.json`; store them with `schema snapshot` at finalization. In a
+SYNC run, `schema check <repo> <F-id> --input rows.json` shows whether the live schema moved since the last release.
 
 ## 3c UI and flows
 Layout, visual states (loading / empty / error / **stale** / offline / read-only / conflict), flows with alternative

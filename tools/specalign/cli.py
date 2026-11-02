@@ -17,9 +17,11 @@ from pathlib import Path
 from . import drift as drift_mod
 from . import docedit as docedit_mod
 from . import finalize as finalize_mod
+from . import inventory as inventory_mod
 from . import lint as lint_mod
 from . import manifest as manifest_mod
 from . import preflight as preflight_mod
+from . import schema as schema_mod
 from . import registry as registry_mod
 from .common import SpecAlignError, read_text
 
@@ -56,7 +58,10 @@ def cmd_drift(args: argparse.Namespace) -> int:
     else:
         print(drift_mod.human_report(payload))
     statuses = [f["status"] for f in payload["features"]]
-    if "drifted" in statuses and not args.exit_zero:
+    if args.own_only:
+        if any(f.get("drift_class") == "own" for f in payload["features"]) and not args.exit_zero:
+            return 1
+    elif "drifted" in statuses and not args.exit_zero:
         return 1
     if args.strict and "unverifiable" in statuses:
         return 3
@@ -209,6 +214,39 @@ def cmd_finalize(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_inventory(args: argparse.Namespace) -> int:
+    payload = inventory_mod.run_inventory(args.repo, args.spec_dir, [f.upper() for f in args.features] or None,
+                                          Path(args.tables_file) if args.tables_file else None)
+    print(json.dumps(payload, indent=2, ensure_ascii=False) if args.json else inventory_mod.human_report(payload))
+    return 1 if args.strict and (payload["summary"]["undocumented"] or payload["summary"]["missing_in_code"]) else 0
+
+
+def cmd_schema(args: argparse.Namespace) -> int:
+    rows = schema_mod.load_rows(Path(args.input))
+    if args.op == "fingerprint":
+        print(schema_mod.describe(rows))
+        return 0
+    if args.op == "snapshot":
+        print(f"wrote {schema_mod.snapshot(args.repo, args.spec_dir, args.feature, rows)}")
+        print(schema_mod.describe(rows))
+        return 0
+    res = schema_mod.check(args.repo, args.spec_dir, args.feature, rows)
+    if args.json:
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+    elif res["status"] == "unrecorded":
+        print(f"{res['feature']}: the spec records no schema fingerprint; current is {res['current']}")
+    elif res["status"] == "match":
+        print(f"{res['feature']}: schema matches {res['recorded']}")
+    else:
+        print(f"{res['feature']}: SCHEMA CHANGED — recorded {res['recorded']}, current {res['current']}")
+        for kind, items in (res["changes"] or {}).items():
+            for it in items:
+                print(f"    {kind}: {it}")
+        if res["changes"] is None:
+            print("    (no snapshot stored; run `schema snapshot` at the next finalization to get a diff)")
+    return {"match": 0, "mismatch": 1, "unrecorded": 3}[res["status"]]
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="specalign", description="SpecAlign tooling")
     sub = p.add_subparsers(dest="command", required=True)
@@ -230,6 +268,7 @@ def build_parser() -> argparse.ArgumentParser:
     common(dr)
     dr.add_argument("features", nargs="*", help="optional F-ids to limit the report (e.g. F2 F6)")
     dr.add_argument("--exit-zero", action="store_true", help="report only; never fail on drift")
+    dr.add_argument("--own-only", action="store_true", help="fail only on a feature's own drift, not ripple from shared files")
     dr.add_argument("--strict", action="store_true", help="exit 3 when a feature is unverifiable")
     dr.set_defaults(func=cmd_drift)
 
@@ -338,6 +377,26 @@ def build_parser() -> argparse.ArgumentParser:
             sp.add_argument("--remote", required=True)
             sp.add_argument("--branch", default=None)
             sp.add_argument("--execute", action="store_true", help="actually run git push")
+
+    iv = sub.add_parser("inventory", help="endpoints (and tables) in code vs what the spec says; advisory")
+    common(iv)
+    iv.add_argument("features", nargs="*")
+    iv.add_argument("--tables-file", default=None, help="JSON array of real table names (from the DB adapter)")
+    iv.add_argument("--strict", action="store_true", help="exit 1 when something in code is undocumented")
+    iv.set_defaults(func=cmd_inventory)
+
+    sc = sub.add_parser("schema", help="fingerprint of the database objects a spec depends on")
+    sc_sub = sc.add_subparsers(dest="op", required=True)
+    sf = sc_sub.add_parser("fingerprint", help="hash introspection rows")
+    sf.add_argument("--input", required=True, help="JSON rows from the adapter's introspection query")
+    sf.set_defaults(func=cmd_schema)
+    for name, hp in (("snapshot", "store the rows under <SPEC_DIR>/schema/<F>.json"),
+                     ("check", "compare with the spec's recorded fingerprint")):
+        sp = sc_sub.add_parser(name, help=hp)
+        common(sp)
+        sp.add_argument("feature")
+        sp.add_argument("--input", required=True)
+        sp.set_defaults(func=cmd_schema)
     return p
 
 

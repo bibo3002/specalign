@@ -42,6 +42,15 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(chk["version"], "1.2.3")
         self.assertEqual((self.target / "stages" / "00.md").read_text(encoding="utf-8"), "stage 0 — صفر\n")
 
+    def test_known_legacy_files_are_pruned(self):
+        (self.target / "scripts").mkdir(parents=True)
+        (self.target / "scripts" / "test_drift_probe.py").write_text("old\n")
+        (self.target / "scripts" / "mine.py").write_text("keep\n")
+        r = installer.install(self.target, self.src)
+        self.assertIn("scripts/test_drift_probe.py", r["removed"])
+        self.assertFalse((self.target / "scripts" / "test_drift_probe.py").exists())
+        self.assertTrue((self.target / "scripts" / "mine.py").exists())
+
     def test_second_install_writes_nothing(self):
         installer.install(self.target, self.src)
         self.assertEqual(installer.install(self.target, self.src)["written"], [])

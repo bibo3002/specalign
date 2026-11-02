@@ -25,6 +25,10 @@ SKIP_SUFFIXES = {".pyc", ".pyo"}
 TEXT_SUFFIXES = {".md", ".py", ".json", ".yml", ".yaml", ".txt", ".sql", ".toml", ".cfg", ".ini", ""}
 
 
+# Files shipped by releases before 1.0 that no longer exist; an install removes them (they would shadow new code).
+LEGACY_FILES = ("scripts/test_drift_probe.py",)
+
+
 def source_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
@@ -130,6 +134,11 @@ def install(target: Path, root: Path, force: bool = False, dry_run: bool = False
             dest.write_bytes(data)
     for rel in old:
         if rel not in files and (target / rel).exists():
+            removed.append(rel)
+            if not dry_run:
+                (target / rel).unlink()
+    for rel in LEGACY_FILES:
+        if (target / rel).exists() and rel not in files:
             removed.append(rel)
             if not dry_run:
                 (target / rel).unlink()

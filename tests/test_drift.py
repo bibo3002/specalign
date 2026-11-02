@@ -211,5 +211,51 @@ class DriftTests(unittest.TestCase):
         self.assertEqual(p.returncode, 2)
 
 
+class DriftClassTests(unittest.TestCase):
+    def setUp(self):
+        self.repo = Repo()
+        self.addCleanup(self.repo.cleanup)
+        self.repo.write("src/shared.ts", "s\n")
+        self.repo.write("src/a.ts", "a\n")
+        self.repo.write("src/b.ts", "b\n")
+        self.repo.add_feature("F1", "one", sources="src/shared.ts, src/a.ts")
+        self.repo.add_feature("F2", "two", sources="src/shared.ts, src/b.ts")
+
+    def report(self, only=None):
+        return {f["id"]: f for f in drift.run_drift(self.repo.path, only=only)["features"]}
+
+    def test_change_to_a_shared_file_is_ripple_and_covered_when_the_other_tag_contains_it(self):
+        self.repo.write("src/shared.ts", "s2\n")
+        self.repo.commit("touch shared")
+        self.repo.add_feature("F2", "two", version="1.1.0", sources="src/shared.ts, src/b.ts")   # F2 re-released after
+        r = self.report()
+        self.assertEqual(r["F1"]["drift_class"], "ripple")
+        c = r["F1"]["offending_commits"][0]
+        self.assertEqual((c["class"], c["shared_with"], c["covered_by"]), ("ripple", ["F2"], ["F2"]))
+        self.assertEqual(r["F2"]["status"], "clean")
+
+    def test_change_to_an_owned_file_is_own_drift(self):
+        self.repo.write("src/a.ts", "a2\n")
+        self.repo.commit("touch a")
+        r = self.report()
+        self.assertEqual((r["F1"]["status"], r["F1"]["drift_class"]), ("drifted", "own"))
+        self.assertEqual(r["F2"]["status"], "clean")
+
+    def test_mixed_commit_counts_as_own(self):
+        self.repo.write("src/shared.ts", "s3\n")
+        self.repo.write("src/a.ts", "a3\n")
+        self.repo.commit("both")
+        self.assertEqual(self.report()["F1"]["drift_class"], "own")
+
+    def test_cli_own_only_ignores_ripple(self):
+        self.repo.write("src/shared.ts", "s2\n")
+        self.repo.commit("touch shared")
+        cmd = [sys.executable, "-m", "specalign", "drift", str(self.repo.path)]
+        env = {"PYTHONPATH": str(TOOLS), "PATH": __import__("os").environ["PATH"], "SYSTEMROOT": __import__("os").environ.get("SYSTEMROOT", "")}
+        full = subprocess.run(cmd, capture_output=True, env=env)
+        own = subprocess.run(cmd + ["--own-only"], capture_output=True, env=env)
+        self.assertEqual((full.returncode, own.returncode), (1, 0))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

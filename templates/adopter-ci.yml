@@ -34,6 +34,11 @@ jobs:
             PYTHONPATH="$SKILL_TOOLS" python -m specalign manifest verify . --run "$run" || exit 1
           done
         shell: bash
-      - name: Drift report (informational — ripple drift is expected)
-        run: PYTHONPATH="$SKILL_TOOLS" python -m specalign drift . --exit-zero
+      - name: Own drift (blocking) — a feature's own sources changed after its release tag
+        run: PYTHONPATH="$SKILL_TOOLS" python -m specalign drift . --own-only
+        shell: bash
+      - name: Ripple drift and inventory (informational)
+        run: |
+          PYTHONPATH="$SKILL_TOOLS" python -m specalign drift . --exit-zero
+          PYTHONPATH="$SKILL_TOOLS" python -m specalign inventory .
         shell: bash

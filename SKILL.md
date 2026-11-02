@@ -93,15 +93,16 @@ normalised at their next SYNC (`modes/sync.md`).
 |---|---|
 | `preflight <repo>` | stage 0: binding complete, tracked files clean, tag namespace, encodings; exit 0/1/2 |
 | `registry check <repo>` | INDEX ↔ spec ↔ §0 Card ↔ exact tag; exit 0/1/2 |
-| `drift <repo> [F-ids]` | sources changed since each release tag; exit 0/1/2/3 |
+| `drift <repo> [F-ids]` | sources changed since each release tag, split into own vs ripple; exit 0/1/2/3 |
+| `inventory <repo> [F-ids]` | endpoints (and tables) in code vs what the specs say; advisory |
+| `schema fingerprint\|snapshot\|check` | hash of the live database objects a spec depends on; exit 0/1/2/3 |
 | `lint <repo> [F-ids]` | blocks, IDs, DF → AC → evidence chain, labels, markers; exit 0/1/2 |
 | `docedit …` | table-aware, EOL/BOM-preserving edits of specs and the registry (no hand-written scripts) |
 | `manifest init/stage/approve/add/show/verify` | run record + resumable state; approvals stored verbatim, UTC time |
 | `finalize plan/apply/staged/tag/push <plan.json>` | dry-run-first finalization; apply, tag, push refuse without the recorded approval |
 | `python install.py --check` | skill copies match the source; no hand edits |
 
-Not yet shipped (do not call): `inventory`; its step is manual, as the stage file says. Tool output is pasted into
-§14, never retyped.
+Tool output is pasted into §14, never retyped.
 
 ## Rationalization table
 

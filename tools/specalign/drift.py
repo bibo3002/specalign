@@ -200,6 +200,7 @@ class FeatureReport:
     dead_patterns: list[str] = field(default_factory=list)
     offending_commits: list[dict] = field(default_factory=list)
     reason: str | None = None
+    drift_class: str | None = None      # own | ripple | None (clean / unverifiable)
 
 
 def evaluate(fid: str, raw_sources: str | None, base: Base, repo: Path,
@@ -239,16 +240,56 @@ def run_drift(repo: Path, spec_dir: str = "docs/specs", tag_prefix: str | None =
     history: dict[str | None, list[dict]] = {}
 
     reports: list[FeatureReport] = []
-    for fid, paths in sorted(spec_files(sdir).items(), key=lambda kv: int(kv[0][1:])):
+    patterns_by_fid: dict[str, list[str]] = {}
+    bases: dict[str, Base] = {}
+    ordered = sorted(spec_files(sdir).items(), key=lambda kv: int(kv[0][1:]))
+    for fid, paths in ordered:                       # every spec is needed to know which files are shared
+        row = rows.get(fid)
+        sources = sources_line(read_text(paths[0]))
+        patterns_by_fid[fid] = parse_sources(sources).patterns if sources else []
+        bases[fid] = resolve_base(repo, prefix, fid, row.tag if row else "", row.last_verified if row else "")
+    for fid, paths in ordered:
         if only and fid not in only:
             continue
-        text = read_text(paths[0])
-        row = rows.get(fid)
-        base = resolve_base(repo, prefix, fid, row.tag if row else "", row.last_verified if row else "")
-        reports.append(evaluate(fid, sources_line(text), base, repo, tracked, history))
+        reports.append(evaluate(fid, sources_line(read_text(paths[0])), bases[fid], repo, tracked, history))
 
+    _classify(repo, reports, patterns_by_fid, bases)
     return {"schema": SCHEMA, "repo": str(repo), "spec_dir": spec_dir, "tag_prefix": prefix,
             "features": [asdict(r) for r in reports]}
+
+
+def _classify(repo: Path, reports: list[FeatureReport], patterns: dict[str, list[str]], bases: dict[str, Base]) -> None:
+    """Split drift into the feature's own changes and ripple from files other specs also document.
+
+    A commit is `ripple` for F when every file it touches in F's sources is also a source of another spec;
+    `covered_by` names those specs whose release tag already contains the commit (they absorbed the change, so
+    F needs a ripple patch rather than a rewrite). Anything else is `own` drift."""
+    ancestor_cache: dict[tuple[str, str], bool] = {}
+
+    def contained(commit: str, ref: str | None) -> bool:
+        if not ref:
+            return False
+        key = (commit, ref)
+        if key not in ancestor_cache:
+            ancestor_cache[key] = git_ok(repo, "merge-base", "--is-ancestor", commit, ref)
+        return ancestor_cache[key]
+
+    for rep in reports:
+        if not rep.offending_commits:
+            continue
+        kinds = set()
+        for c in rep.offending_commits:
+            shared: dict[str, list[str]] = {}
+            for f in c["files"]:
+                others = sorted(g for g, pats in patterns.items()
+                                if g != rep.id and any(source_matches(p, f) for p in pats))
+                if others:
+                    shared[f] = others
+            c["shared_with"] = sorted({g for v in shared.values() for g in v})
+            c["covered_by"] = sorted(g for g in c["shared_with"] if g in bases and contained(c["hash"], bases[g].ref))
+            c["class"] = "ripple" if shared and len(shared) == len(c["files"]) else "own"
+            kinds.add(c["class"])
+        rep.drift_class = "own" if "own" in kinds else "ripple"
 
 
 def human_report(payload: dict) -> str:
@@ -265,7 +306,10 @@ def human_report(payload: dict) -> str:
             lines.append(f"    sources: {len(f['sources'])} pattern(s)")
         for c in f["offending_commits"]:
             subject = c["subject"] if len(c["subject"]) <= 100 else c["subject"][:97] + "..."
-            lines.append(f"      {c['hash'][:10]} {c['date'][:10]} {subject}")
+            extra = ""
+            if c.get("class") == "ripple":
+                extra = f"  [ripple via {', '.join(c['shared_with'])}" + (f"; already in {', '.join(c['covered_by'])}" if c["covered_by"] else "") + "]"
+            lines.append(f"      {c['hash'][:10]} {c['date'][:10]} {subject}{extra}")
             for p in c["files"]:
                 lines.append(f"          {p}")
         for p in f["dead_patterns"]:

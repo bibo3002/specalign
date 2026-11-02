@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DOC_DIRS = ["stages", "modes", "gates"]
 REF_RE = re.compile(r"`((?:stages|modes|gates|templates|references|adapters|scripts|tools)/[A-Za-z0-9_./*<>{}-]+?)`")
-PLANNED = ("inventory",)
+PLANNED = ()
 
 
 def docs():
