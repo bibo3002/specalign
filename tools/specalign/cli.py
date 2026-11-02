@@ -24,6 +24,7 @@ from . import manifest as manifest_mod
 from . import preflight as preflight_mod
 from . import schema as schema_mod
 from . import registry as registry_mod
+from . import __version__
 from .common import SpecAlignError, read_text
 
 
@@ -270,6 +271,7 @@ def cmd_eval(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="specalign", description="SpecAlign tooling")
+    p.add_argument("--version", action="version", version=f"specalign {__version__}")
     sub = p.add_subparsers(dest="command", required=True)
 
     def common(sp: argparse.ArgumentParser) -> None:

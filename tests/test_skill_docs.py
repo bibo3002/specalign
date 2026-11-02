@@ -85,6 +85,15 @@ class SkillDocTests(unittest.TestCase):
                 if expect:
                     self.assertIn(layout.rsplit("/", 0)[0].lower(), env_file.read_text().lower())
 
+    def test_one_version_everywhere(self):
+        from specalign import __version__
+        version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+        self.assertEqual(__version__, version)
+        router = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        self.assertRegex(router, rf"# SpecAlign \(v{re.escape(version)}\)")
+        changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+        self.assertRegex(changelog, rf"## \[{re.escape(version)}\]")
+
     def test_router_tools_table_lists_every_cli_command(self):
         from specalign.cli import build_parser
         known = set(build_parser()._subparsers._group_actions[0].choices)

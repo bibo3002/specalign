@@ -33,8 +33,10 @@ the agent shows — a bare "yes" to a shown statement counts, and your reply is 
 | `stages/` `modes/` `gates/` | per-stage, per-mode and per-gate instructions, loaded on demand |
 | `templates/` | 18-block spec template, binding template, rescan report, handoff README, adopter CI |
 | `references/` | verification playbook (DB/UI protocols, cleanup, validation matrix), example binding |
-| `adapters/` | what a DB / UI / test adapter must provide |
-| `tools/specalign/` | stdlib-only Python CLI: `registry check`, `drift` (+ installer module) |
+| `adapters/` | DB introspection queries (Postgres, MySQL, SQLite), UI adapters (Playwright, Chrome DevTools, none), test adapter |
+| `evals/` | `scenarios.json` (the 29 validation-matrix rows), example transcripts, how to record one |
+| `tools/specalign/` | stdlib-only Python CLI (Python ≥ 3.10): preflight, registry, drift, lint, inventory, schema, docedit, manifest, finalize, eval (+ installer module) |
+| `RELEASING.md` | 1.0.0 criteria and their status, release / update / rollback procedure |
 | `scripts/` | thin wrappers keeping the old `rescan_check.py` / `drift_probe.py` entry points |
 | `install.py` | installs and verifies the skill in `~/.claude/skills` and `<project>/.opencode/skills` |
 | `tests/` | `unittest` suite (fixtures are throwaway git repos); `python -m unittest discover -s tests` |
@@ -52,11 +54,14 @@ An update refuses to overwrite a file that was edited by hand since the last ins
 ```
 python -m specalign preflight <repo> [--path P]        # run from <skill>/tools; binding, clean tree, tags, encodings
 python -m specalign registry check <repo>              # INDEX ↔ spec ↔ §0 Card ↔ exact tag
-python -m specalign drift <repo> [F-ids]               # sources changed since each release tag
-python -m specalign lint <repo> [F-ids | --file SPEC]  # blocks, IDs, DF → AC → evidence chain, labels
+python -m specalign drift <repo> [F-ids] [--own-only]  # sources changed since each release tag; own vs ripple
+python -m specalign inventory <repo> [--tables-file T] # endpoints / tables in code vs the specs (advisory)
+python -m specalign schema fingerprint|snapshot|check …  # hash of the live DB objects a spec depends on
+python -m specalign lint <repo> [F-ids | --file SPEC] [--baseline B]   # blocks, IDs, DF → AC → evidence chain, labels
 python -m specalign docedit append-row|patch-row|set-card|replace-block FILE …   # table-aware edits
 python -m specalign manifest init|stage|approve|add|show|verify <repo> …         # run record + resume
 python -m specalign finalize plan|apply|staged|tag|push <repo> PLAN.json         # gated finalization
+python -m specalign eval [--transcripts DIR]                                     # skill repo: the validation matrix
 ```
 Exit codes: `preflight`, `registry check`, `lint`, `manifest verify`, `finalize` 0 ok · 1 findings · 2 error. `drift`
 0 clean · 1 drift · 2 error · 3 unverifiable with `--strict`. `--json` output is a stable contract for CI
@@ -86,10 +91,13 @@ All project values live in `<SPEC_DIR>/binding.md` (template: `templates/binding
 
 ## Quality
 
-Every stage transition is gated; evidence rules are tier-invariant. The mechanical checks (registry, drift) are
-tool-run and pasted, never retyped. What is **not** yet validated: the behavioural gates have no executable evals
-(playbook §5 rows 21–29 are "not exercised"); `inventory` and the schema fingerprint are planned; the tools have run
-only against fixture repositories and one real corpus (Sanad), not yet against a second project.
+Every stage transition is gated; evidence rules are tier-invariant. The mechanical checks (registry, drift, lint,
+inventory, schema) are tool-run and pasted, never retyped. 179 tests cover the tools, the gates' refusals and the
+skill's own documents; CI runs them on Linux and Windows, Python 3.10 and 3.12. `python -m specalign eval` runs the 29
+validation-matrix rows: 12 are proven by tests, **17 behavioural rows are not exercised** until an agent transcript is
+recorded and graded (`evals/README.md`). The tools have run against fixture repositories, two dry-run adoptions
+(a Python service, a library) and one real project (Sanad, with its live database); a second real project is still
+missing. Release status: `RELEASING.md`.
 
 ## Troubleshooting (day-one failures only)
 

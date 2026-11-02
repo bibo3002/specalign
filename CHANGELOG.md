@@ -3,8 +3,38 @@
 Single version-history home for the SpecAlign skill.
 
 ## [1.0.0-dev] — unreleased (branch `v1-production`)
-Production-hardening release. Not yet 1.0.0: the release criteria are in the plan (all evals green, three dry-run
-adoptions, linter clean on the reference corpus).
+Production-hardening release. Not yet 1.0.0: the criteria and their status are in `RELEASING.md` (tool-level evals,
+adoptions, golden replay met; recorded transcripts for the 17 behavioural rows are the open item).
+
+### Added — drift, inventory, schema, evals, adoption (found by running on the live Sanad project)
+- `drift` classifies each commit **own** or **ripple** (every matched file is also a source of another spec), names the
+  specs sharing the file and those whose release tag already contains the commit; `--own-only` gates CI on a
+  feature's own drift. On Sanad every one of the 9 "drifted" features was ripple; none was own drift.
+- `inventory`: endpoints (decorator, `app.get`, router styles) and — with the live table list from the DB tool —
+  tables used by SQL, compared with the specs repo-wide. Tolerates `…/:id` elisions, removed-route mentions and
+  routes built as `` `/lookups/${name}` ``. Sanad: 0 undocumented, 0 missing, tables clean.
+- `schema fingerprint|snapshot|check` and per-engine introspection queries (`adapters/postgres|mysql|sqlite`); a
+  mismatch with the spec's recorded fingerprint lists added/removed/changed objects from the stored snapshot.
+  Exercised against the live Sanad database; MySQL and SQLite queries are untested against a server.
+- UI adapters (Playwright, Chrome DevTools, none) with the capability profile (`ui.trusted_clicks`, `ui.print_blocks`,
+  `ui.select_driver`, `db.*`), a test adapter, and the no-DB / no-UI path.
+- `eval` + `evals/scenarios.json`: the 29 validation-matrix rows. 12 are tool scenarios backed by unit tests; 17 are
+  behavioural and graded from recorded transcripts (regex `must` / `must_not` / `order`); without a transcript they
+  report "not exercised". Example good/bad transcripts prove the graders discriminate.
+- `manifest add file --scope remediation` refuses a path the R1 statement does not name; `lint` flags truncated or
+  empty specs; `lint --baseline/--write-baseline` lets a project adopt the linter on an existing corpus and fail
+  only on new errors; `--version`.
+- Dry-run adoptions in `tests/test_adoption.py` (a Python service with decorator routes and SQLite; a no-DB library).
+  Golden replay: F6's real finalization edits replayed through `finalize` on its real spec and CRLF registry are
+  byte-identical, and a second apply changes nothing.
+
+### Fixed — found in the field
+- Sanad's registry workflow had **failed on every push** since it was added: it called `.opencode/skills/...` while git
+  tracks `.opencode/Skills/...` and Linux runners are case-sensitive. The adopter workflow now locates the skill
+  case-insensitively; its locate step also survives the runner's `bash -eo pipefail` when `.claude` is absent (this
+  failed once on the first run and is now a test).
+- `install.py --check` reported all 58 files of a Windows checkout with `core.autocrlf=true` as hand-edited; text
+  files are now compared modulo CRLF. Pre-1.0 leftovers (`scripts/test_drift_probe.py`) are pruned on install.
 
 ### Changed — process (breaking: stage numbers)
 - `SKILL.md` is now a ≤150-line router; detail lives in `stages/`, `modes/`, `gates/` and is read per stage. This
