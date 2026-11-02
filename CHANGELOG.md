@@ -41,6 +41,11 @@ adoptions, golden replay met; recorded transcripts for the 17 behavioural rows a
   `references/cli.md`: no R1 requested in a documentation-only run, and every `specalign` command in them parses with
   the real parser (a test pins this; five of the first-round transcripts had invented syntax).
 
+- First live run through the tools on the reference project (2026-11-02, Sanad SPEC-F4 v1.2.2, Micro, documentation-only):
+  preflight, `manifest` (T1 and C1 recorded with the user's reply verbatim), `finalize plan/apply/staged/tag/push`, with
+  the gates refusing once (tag with a dirty tracked file) as designed. F4's six baselined lint errors were resolved and
+  the baseline emptied; registry 9/9, run record verifies, CI green.
+
 ### Fixed — found in the field
 - Sanad's registry workflow had **failed on every push** since it was added: it called `.opencode/skills/...` while git
   tracks `.opencode/Skills/...` and Linux runners are case-sensitive. The adopter workflow now locates the skill
