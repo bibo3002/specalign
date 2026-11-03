@@ -53,7 +53,7 @@ This file lives in the skill repository only. It is not part of the install payl
 
 ## 3. Findings
 
-Format: **SA-nnn** · category · severity · status · recurrence (runs) · owner verdict.
+Format: **SA-nnn** · category · severity · type (defect / design) · status · recurrence (runs) · acceptance and audit state.
 
 ### From R-01
 
